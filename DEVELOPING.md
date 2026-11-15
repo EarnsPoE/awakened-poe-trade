@@ -40,3 +40,31 @@ npm run build
 # install without errors
 CSC_NAME="Certificate name in Keychain" npm run package
 ```
+
+# Fork: data overrides
+
+`renderer/public/data/<lang>/stats.ndjson` is generated upstream from game data, so it lags behind game patches.
+The fork never edits it, which keeps it re-syncable from upstream as-is. Fork fixes go in the fork-owned
+`renderer/public/data/stats-overrides.json` instead, which `buildStatOverrides` in
+`renderer/src/assets/data/index.ts` layers on top of the upstream data at runtime.
+
+## stats-overrides.json
+
+The file is keyed by client language (`en`, `ru`, `ko`, `cmn-Hant`); a language with no entries can be left out.
+`ref` is always the English stat text, in every language's list. Each entry is one of these kinds:
+
+- **Alias matcher.** The game reworded a stat but its trade id is unchanged. Give the upstream `ref` and a matcher
+  for the new text, which is added to that stat:
+  `{ "ref": "#% increased Rarity of Items found", "matchers": [{ "string": "#% to Item Rarity" }] }`
+- **New stat.** The stat is missing upstream entirely. Add a full object shaped like a `stats.ndjson` line, including
+  `trade.ids`, with a `ref` that doesn't exist upstream.
+
+Matcher strings are the item text with every number replaced by `#`, including a leading `+`/`-`
+(`+12(11-14)% to Item Rarity` becomes `#% to Item Rarity`). Use `"negate": true` for the inverse ("reduced") wording.
+
+## Confirming trade ids
+
+Every id you add must exist on trade. Look it up in https://www.pathofexile.com/api/trade/data/stats (PoE1): find
+the entry whose `text` is the stat with its numbers as `#`, and use its `id` (e.g. `explicit.stat_3917489142`). The
+part after the dot is the stat hash, shared by that stat's `explicit.`, `implicit.`, ... variants. Open it once in a
+browser rather than scripting it, since the trade API rate-limits.

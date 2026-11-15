@@ -106,21 +106,85 @@ async function loadItems (language: string) {
   REPLICA_UNIQUE_NAMES = itemNamesFromLines(ITEMS_ITERATOR('refName":"Replica'))
 }
 
+// Fork-maintained stat data (public/data/stats-overrides.json), layered on top of
+// upstream stats.ndjson so the generated upstream files can be synced untouched.
+// Per language, a list of entries:
+//  - `{ ref, matchers }` with `ref` of an existing stat: adds matchers to it
+//    (use when the game rewords a stat but the trade stat id is unchanged)
+//  - a full `Stat` (with `trade`) whose `ref` doesn't exist upstream: adds a new stat
+type StatOverride = Pick<Stat, 'ref' | 'matchers'> & Partial<Stat>
+
+let STAT_OVERRIDES: Record<string, StatOverride[]> = {}
+
+function buildStatOverrides (language: string) {
+  const entries = STAT_OVERRIDES[language] ?? []
+  const byMatchStr = new Map<string, StatOverride>()
+  const extraMatchersByRef = new Map<string, StatMatcher[]>()
+  const addedByRef = new Map<string, Stat>()
+
+  for (const entry of entries) {
+    for (const m of entry.matchers) {
+      byMatchStr.set(m.advanced ?? m.string, entry)
+    }
+    if (entry.trade) {
+      addedByRef.set(entry.ref, entry as Stat)
+    } else {
+      const list = extraMatchersByRef.get(entry.ref) ?? []
+      list.push(...entry.matchers)
+      extraMatchersByRef.set(entry.ref, list)
+    }
+  }
+
+  function apply (statOrGroup: StatOrGroup): StatOrGroup {
+    if (!extraMatchersByRef.size) return statOrGroup
+    const stats = ('stats' in statOrGroup) ? statOrGroup.stats : [statOrGroup]
+    for (const stat of stats) {
+      const extra = extraMatchersByRef.get(stat.ref)
+      if (extra) {
+        for (const m of extra) {
+          if (!stat.matchers.some(own => own.string === m.string && own.advanced === m.advanced)) {
+            stat.matchers.push({ ...m })
+          }
+        }
+      }
+    }
+    return statOrGroup
+  }
+
+  return { byMatchStr, addedByRef, apply }
+}
+
 async function loadStats (language: string) {
   const ndjson = await (await fetch(`${import.meta.env.BASE_URL}data/${language}/stats.ndjson`)).text()
   const INDEX_WIDTH = 2
   const indexRef = new Uint32Array(await (await fetch(`${import.meta.env.BASE_URL}data/${language}/stats-ref.index.bin`)).arrayBuffer())
   const indexMatcher = new Uint32Array(await (await fetch(`${import.meta.env.BASE_URL}data/${language}/stats-matcher.index.bin`)).arrayBuffer())
 
+  const overrides = buildStatOverrides(language)
+
   STAT_BY_REF_V2 = function (ref: string) {
     let start = dataBinarySearch(indexRef, Number(fnv1a(ref, { size: 32 })), 0, INDEX_WIDTH)
-    if (start === -1) return undefined
+    if (start === -1) {
+      const added = overrides.addedByRef.get(ref)
+      return added ? structuredClone(added) : undefined
+    }
     start = indexRef[start * INDEX_WIDTH + 1]
     const end = ndjson.indexOf('\n', start)
-    return JSON.parse(ndjson.slice(start, end))
+    return overrides.apply(JSON.parse(ndjson.slice(start, end)))
   }
 
   STAT_BY_MATCH_STR_V2 = function (matchStr: string) {
+    const found = _statByMatchStrUpstream(matchStr)
+    if (found) return overrides.apply(found)
+
+    const override = overrides.byMatchStr.get(matchStr)
+    if (!override) return undefined
+    // `ref` either names a stat added by the fork, or an upstream stat that
+    // got an extra matcher (the game reworded its text); both are handled there
+    return STAT_BY_REF_V2(override.ref)
+  }
+
+  function _statByMatchStrUpstream (matchStr: string): StatOrGroup | undefined {
     let start = dataBinarySearch(indexMatcher, Number(fnv1a(matchStr, { size: 32 })), 0, INDEX_WIDTH)
     if (start === -1) return undefined
     start = indexMatcher[start * INDEX_WIDTH + 1]
@@ -157,7 +221,8 @@ async function loadStats (language: string) {
   const _STATS_ITERATOR = ndjsonFindLines<StatOrGroup>(ndjson)
 
   STATS_ITERATOR = function * (includes, andIncludes) {
-    for (const statOrGroup of _STATS_ITERATOR(includes, andIncludes)) {
+    for (let statOrGroup of _STATS_ITERATOR(includes, andIncludes)) {
+      statOrGroup = overrides.apply(statOrGroup)
       if ('stats' in statOrGroup) {
         for (const stat of statOrGroup.stats) {
           yield stat
@@ -193,6 +258,7 @@ export async function init (lang: string) {
   CLIENT_STRINGS_REF = (await import(/* @vite-ignore */`${import.meta.env.BASE_URL}data/en/client_strings.js`)).default
   ITEM_DROP = await (await fetch(`${import.meta.env.BASE_URL}data/item-drop.json`)).json()
   APP_PATRONS = await (await fetch(`${import.meta.env.BASE_URL}data/patrons.json`)).json()
+  STAT_OVERRIDES = await (await fetch(`${import.meta.env.BASE_URL}data/stats-overrides.json`)).json()
 
   await loadForLang(lang)
 
