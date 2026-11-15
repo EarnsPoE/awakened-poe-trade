@@ -74,8 +74,13 @@ function itemNamesFromLines (items: Generator<BaseType>) {
   }
 }
 
+// Fork-maintained item data (public/data/items-overrides.json), same idea as stats-overrides.json:
+// per language, a list of `BaseType` records for items missing from upstream items.ndjson
+// (e.g. bases introduced this league). Upstream records win when both exist.
+let ITEM_OVERRIDES: Record<string, BaseType[]> = {}
+
 async function loadItems (language: string) {
-  const ndjson = await (await fetch(`${import.meta.env.BASE_URL}data/${language}/items.ndjson`)).text()
+  let ndjson = await (await fetch(`${import.meta.env.BASE_URL}data/${language}/items.ndjson`)).text()
   const INDEX_WIDTH = 2
   const indexNames = new Uint32Array(await (await fetch(`${import.meta.env.BASE_URL}data/${language}/items-name.index.bin`)).arrayBuffer())
   const indexRefNames = new Uint32Array(await (await fetch(`${import.meta.env.BASE_URL}data/${language}/items-ref.index.bin`)).arrayBuffer())
@@ -99,8 +104,30 @@ async function loadItems (language: string) {
     }
   }
 
-  ITEM_BY_TRANSLATED = commonFind(indexNames, 'name')
-  ITEM_BY_REF = commonFind(indexRefNames, 'refName')
+  const overrides = ITEM_OVERRIDES[language] ?? []
+  function overrideFind (prop: 'name' | 'refName') {
+    const byKey = new Map<string, BaseType[]>()
+    for (const record of overrides) {
+      const key = `${record.namespace}::${record[prop]}`
+      byKey.set(key, [...(byKey.get(key) ?? []), record])
+    }
+    return function (ns: BaseType['namespace'], name: string): BaseType[] | undefined {
+      return byKey.get(`${ns}::${name}`)?.map(record => structuredClone(record))
+    }
+  }
+  function withOverrides (
+    upstream: ReturnType<typeof commonFind>,
+    fork: ReturnType<typeof overrideFind>
+  ) {
+    return (ns: BaseType['namespace'], name: string) => upstream(ns, name) ?? fork(ns, name)
+  }
+
+  ITEM_BY_TRANSLATED = withOverrides(commonFind(indexNames, 'name'), overrideFind('name'))
+  ITEM_BY_REF = withOverrides(commonFind(indexRefNames, 'refName'), overrideFind('refName'))
+  // appended after upstream lines, so index offsets above stay valid
+  if (overrides.length) {
+    ndjson += overrides.map(record => JSON.stringify(record) + '\n').join('')
+  }
   ITEMS_ITERATOR = ndjsonFindLines<BaseType>(ndjson)
   ALTQ_GEM_NAMES = itemNamesFromLines(ITEMS_ITERATOR('altQuality":["Anomalous'))
   REPLICA_UNIQUE_NAMES = itemNamesFromLines(ITEMS_ITERATOR('refName":"Replica'))
@@ -294,6 +321,7 @@ export async function init (lang: string) {
   ITEM_DROP = await (await fetch(`${import.meta.env.BASE_URL}data/item-drop.json`)).json()
   APP_PATRONS = await (await fetch(`${import.meta.env.BASE_URL}data/patrons.json`)).json()
   STAT_OVERRIDES = await (await fetch(`${import.meta.env.BASE_URL}data/stats-overrides.json`)).json()
+  ITEM_OVERRIDES = await (await fetch(`${import.meta.env.BASE_URL}data/items-overrides.json`)).json()
 
   await loadForLang(lang)
 
