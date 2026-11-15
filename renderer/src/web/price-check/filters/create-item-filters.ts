@@ -293,7 +293,8 @@ export function createFilters (
       disabled: false
     }
   } else if (
-    opts.exact &&
+    // Offer an opt-in "Magic" chip in every preset, not just the exact ones:
+    // the pseudo preset otherwise searches "nonunique" and mixes in rares.
     item.rarity === ItemRarity.Magic &&
     !CONSUMABLE_CRAFTABLE_ITEM.has(item.category!) &&
     !MAGIC_ONLY_OR_UNIQUE_ITEM.has(item.category!)
