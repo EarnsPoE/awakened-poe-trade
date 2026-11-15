@@ -5,10 +5,14 @@
 This is a fork of [SnosMe/awakened-poe-trade](https://github.com/SnosMe/awakened-poe-trade) that aims to recognize
 new mods and items sooner after a game patch than upstream data updates do.
 
-It differs from upstream in one way: upstream's generated game data (`renderer/public/data/<lang>/stats.ndjson`)
-is left untouched, and the fork's fixes live in a separate, hand-maintained overrides file
-(`renderer/public/data/stats-overrides.json`) that is layered on top at runtime. Upstream data can therefore be
-re-synced as-is. See [DEVELOPING.md](./DEVELOPING.md#fork-data-overrides) for the file format.
+It differs from upstream in one way: upstream's generated game data (`renderer/public/data/<lang>/stats.ndjson`
+and `items.ndjson`) is left untouched, and the fork's fixes live in separate, hand-maintained overrides files
+(`renderer/public/data/stats-overrides.json` and `items-overrides.json`) that are layered on top at runtime.
+Upstream data can therefore be re-synced as-is. See [DEVELOPING.md](./DEVELOPING.md#fork-data-overrides) for the
+file formats.
+
+Added so far: the reworded "+#% to Item Rarity" suffix, and the Viscera (Wickerman body parts) item class, with
+[known gaps](./DEVELOPING.md#viscera-wickerman-body-parts).
 
 All credit for the app goes to Alexander Drozdov and the upstream contributors. Like upstream, the fork is
 distributed under the [MIT License](./LICENSE). For the official release, issues and support, use upstream.

@@ -43,10 +43,15 @@ CSC_NAME="Certificate name in Keychain" npm run package
 
 # Fork: data overrides
 
-`renderer/public/data/<lang>/stats.ndjson` is generated upstream from game data, so it lags behind game patches.
-The fork never edits it, which keeps it re-syncable from upstream as-is. Fork fixes go in the fork-owned
-`renderer/public/data/stats-overrides.json` instead, which `buildStatOverrides` in
-`renderer/src/assets/data/index.ts` layers on top of the upstream data at runtime.
+`renderer/public/data/<lang>/stats.ndjson` and `items.ndjson` are generated upstream from game data, so they lag
+behind game patches. The fork never edits them, which keeps them re-syncable from upstream as-is. Fork fixes go in
+two fork-owned files instead, which `renderer/src/assets/data/index.ts` layers on top of the upstream data at
+runtime. In both, upstream data is looked up first and the overrides fill the gaps.
+
+| File | Applied by | Holds |
+|---|---|---|
+| `renderer/public/data/stats-overrides.json` | `buildStatOverrides` | reworded, missing or under-tagged stats |
+| `renderer/public/data/items-overrides.json` | `loadItems` | item bases missing upstream |
 
 ## stats-overrides.json
 
@@ -56,6 +61,11 @@ The file is keyed by client language (`en`, `ru`, `ko`, `cmn-Hant`); a language 
 - **Alias matcher.** The game reworded a stat but its trade id is unchanged. Give the upstream `ref` and a matcher
   for the new text, which is added to that stat:
   `{ "ref": "#% increased Rarity of Items found", "matchers": [{ "string": "#% to Item Rarity" }] }`
+- **Extra trade ids (`addTradeIds`).** Trade gained a new id for a stat that exists upstream (for example, the stat
+  can now roll as an implicit on a new item class). Give the upstream `ref`, no matchers, and the ids by mod type:
+  `{ "ref": "+# to maximum Fortification", "matchers": [], "addTradeIds": { "implicit": ["implicit.stat_335507772"] } }`
+  If a stat group holds several stats with that `ref` (local and global variants), the id goes only to the one that
+  already uses the same stat hash. Because `ref` is English everywhere, repeat the entry under every language.
 - **New stat.** The stat is missing upstream entirely. Add a full object shaped like a `stats.ndjson` line, including
   `trade.ids`, with a `ref` that doesn't exist upstream.
 
@@ -68,6 +78,42 @@ Every id you add must exist on trade. Look it up in https://www.pathofexile.com/
 the entry whose `text` is the stat with its numbers as `#`, and use its `id` (e.g. `explicit.stat_3917489142`). The
 part after the dot is the stat hash, shared by that stat's `explicit.`, `implicit.`, ... variants. Open it once in a
 browser rather than scripting it, since the trade API rate-limits.
+
+## items-overrides.json
+
+Keyed by client language like the stats file. Each entry is a record shaped like an `items.ndjson` line, where
+`name` is the base's name in that client language and `refName` its English name:
+`{ "name": "Flaming Goat Hoof", "refName": "Flaming Goat Hoof", "namespace": "ITEM", "icon": "", "craftable": { "category": "Viscera" } }`
+
+Overrides are only consulted when upstream has no base by that name, so an entry goes dead (and can be deleted)
+once upstream ships the base. Base names come from https://www.pathofexile.com/api/trade/data/items.
+
+## Viscera (Wickerman body parts)
+
+Supported through both files plus parser changes:
+
+- `items-overrides.json`: the 161 bases in trade's `viscera` group (checked 2026-11-15, Covens league).
+- `stats-overrides.json`: 96 implicit trade ids attached to existing stats with `addTradeIds` (all languages), and
+  135 new English implicit stats. 20 area/map-only implicits ("Area contains…", "Map Crafting…", "Monster Level",
+  "Contains a Forge…") are skipped.
+- Parser (`renderer/src/parser/Parser.ts`): the class is detected by its Wickerman help text; the "Lesser "/"Greater "
+  tier prefix is stripped, since trade only knows the plain base; the slot line (Head / Upper Limb / Torso /
+  Lower Limb) selects the trade sub-category `viscera.head|arm|body|leg`.
+
+Known gaps:
+
+- **No icons.** The trade items endpoint has no images, so `icon` is empty.
+- **English clients only.** Base names and the `VISCERA_*` client strings exist only for `en`; other languages
+  don't recognize Viscera (which is why those keys are optional in `TranslationDict`).
+- **No `Rarity:` line** in the item text. The parser assumes Normal, which is how trade lists them.
+- **Unmarked implicit with Ctrl+C.** The parser takes a section as the implicit if at least one of its lines parses
+  as a known stat, so a `Note: ~price` section isn't mistaken for it. Ctrl+Alt+C text has the
+  `{ Implicit Modifier }` header and is parsed normally.
+- **Heuristic stat polarity.** The 135 new stats got their `better`/`negate`/`inverted` values from the wording
+  ("increased"/"reduced"/"more", "taken", "against you", ...), not a per-stat review. Some are wrong, e.g.
+  "#% increased Mana Reservation of Skills" is marked as better when higher.
+- **No tier filter.** Trade groups Lesser and Greater under one base, so tier can't be searched on.
+- Not yet confirmed with a live price check in the overlay.
 
 # Fork: running the dev build
 
