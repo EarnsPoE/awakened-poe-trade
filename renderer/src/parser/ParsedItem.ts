@@ -58,6 +58,8 @@ export interface ParsedItem {
   }
   logbookAreaMods?: ParsedModifier[][]
   chartSulphur?: number
+  // trade sub-category of the body part a Viscera attaches to on the Wickerman
+  visceraSlot?: 'head' | 'arm' | 'body' | 'leg'
 
   gemLevel?: number
   vaalGem?: BaseType

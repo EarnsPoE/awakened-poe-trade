@@ -14,6 +14,8 @@ interface SearchFilter {
   baseTypeTrade?: string
   discriminatorTrade?: string
   category?: ItemCategory
+  // trade category id that's more specific than `category` (e.g. Viscera slot)
+  tradeCategory?: string
 }
 
 interface SearchFilterSub extends SearchFilter {

@@ -50,7 +50,8 @@ export function createPresets (
     item.category === ItemCategory.HeistContract ||
     item.category === ItemCategory.HeistBlueprint ||
     item.category === ItemCategory.Chart ||
-    item.category === ItemCategory.Sentinel
+    item.category === ItemCategory.Sentinel ||
+    item.category === ItemCategory.Viscera
   ) {
     if (item.rarity !== ItemRarity.Unique && (
       (item.category === ItemCategory.Map && !item.mapCompletionReward) ||

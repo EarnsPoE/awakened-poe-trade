@@ -45,7 +45,7 @@ export default defineComponent({
         return activeSearch.baseType
       }
       if (activeSearch.category) {
-        const tradeId = CATEGORY_TO_TRADE_ID.get(activeSearch.category)!
+        const tradeId = activeSearch.tradeCategory ?? CATEGORY_TO_TRADE_ID.get(activeSearch.category)!
         return t('item_category.prop', [t(`item_category.${tradeId.replace('.', '_')}`)])
       }
 

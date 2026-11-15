@@ -52,7 +52,8 @@ export const CATEGORY_TO_TRADE_ID = new Map([
   [ItemCategory.Charm, 'azmeri.charm'],
   [ItemCategory.Idol, 'idol'],
   [ItemCategory.Graft, 'graft'],
-  [ItemCategory.Chart, 'chart']
+  [ItemCategory.Chart, 'chart'],
+  [ItemCategory.Viscera, 'viscera']
 ])
 
 const TOTAL_MODS_TEXT = {
@@ -321,7 +322,7 @@ export function createTradeRequest (filters: ItemFilters, stats: FilterOrGroup[]
   }
 
   if (activeSearch.category) {
-    const id = CATEGORY_TO_TRADE_ID.get(activeSearch.category)
+    const id = activeSearch.tradeCategory ?? CATEGORY_TO_TRADE_ID.get(activeSearch.category)
     if (id) {
       propSet(query.filters, 'type_filters.filters.category.option', id)
     } else {

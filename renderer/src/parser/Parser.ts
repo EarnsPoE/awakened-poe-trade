@@ -59,6 +59,7 @@ const parsers: Array<ParserFn | { virtual: VirtualParserFn }> = [
   parseHeistContract,
   parseHeistBlueprint,
   parseChart,
+  parseVisceraSlot,
   parseAreaLevel,
   parseAtzoatlRooms,
   parseMirroredTablet,
@@ -77,6 +78,7 @@ const parsers: Array<ParserFn | { virtual: VirtualParserFn }> = [
   parseMercenaryGems,
   parseMercenaryGems,
   parseMercenaryGems,
+  parseVisceraImplicit,
   parseModifiers, // enchant
   parseModifiers, // scourge
   parseModifiers, // implicit
@@ -159,6 +161,14 @@ function normalizeName (item: ParserState) {
     const baseType = magicBasetype(item.name)
     if (baseType) {
       item.name = baseType
+    }
+  }
+
+  if (item.category === ItemCategory.Viscera && _$.VISCERA_TIER) {
+    // "Lesser Soldier's Head" / "Greater Soldier's Head" are tiers of the same base on trade
+    const tier = _$.VISCERA_TIER.exec(item.name)
+    if (tier) {
+      item.name = tier[1]
     }
   }
 
@@ -980,9 +990,47 @@ function parseCategoryByHelpText (section: string[], item: ParsedItem) {
   } else if (section[0] === _$.VOIDSTONE_HELP) {
     item.category = ItemCategory.Voidstone
     return 'SECTION_PARSED'
+  } else if (_$.VISCERA_HELP && section[0] === _$.VISCERA_HELP) {
+    item.category = ItemCategory.Viscera
+    // Viscera have no "Rarity:" line, trade lists them as Normal
+    item.rarity ??= ItemRarity.Normal
+    return 'SECTION_PARSED'
   }
 
   return 'SECTION_SKIPPED'
+}
+
+function parseVisceraSlot (section: string[], item: ParsedItem) {
+  if (item.category !== ItemCategory.Viscera) return 'PARSER_SKIPPED'
+  if (section.length !== 1) return 'SECTION_SKIPPED'
+
+  switch (section[0]) {
+    case _$.VISCERA_SLOT_HEAD: item.visceraSlot = 'head'; break
+    case _$.VISCERA_SLOT_ARM: item.visceraSlot = 'arm'; break
+    case _$.VISCERA_SLOT_BODY: item.visceraSlot = 'body'; break
+    case _$.VISCERA_SLOT_LEG: item.visceraSlot = 'leg'; break
+    default: return 'SECTION_SKIPPED'
+  }
+  return 'SECTION_PARSED'
+}
+
+function parseVisceraImplicit (section: string[], item: ParsedItem) {
+  if (item.category !== ItemCategory.Viscera) return 'PARSER_SKIPPED'
+  // Ctrl+Alt+C text marks it as "{ Implicit Modifier }", leave that to `parseModifiers`
+  if (section.some(isModInfoLine)) return 'SECTION_SKIPPED'
+
+  // Ctrl+C text has the implicit unmarked; only take a section whose lines are known stats
+  // so that e.g. a "Note: ~price" section is not mistaken for it
+  const probe: ParsedItem = { ...item, newMods: [], unknownModifiers: [] }
+  parseStatsFromMod(section, probe, {
+    info: { type: ModifierType.Implicit, tags: [] },
+    stats: []
+  })
+  if (!probe.newMods[0].stats.length) return 'SECTION_SKIPPED'
+
+  item.newMods.push(...probe.newMods)
+  item.unknownModifiers.push(...probe.unknownModifiers)
+  return 'SECTION_PARSED'
 }
 
 function parseHeistContract (section: string[], item: ParsedItem) {

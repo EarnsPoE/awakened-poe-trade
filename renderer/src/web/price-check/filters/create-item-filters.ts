@@ -241,6 +241,9 @@ export function createFilters (
       }
       filters.searchRelaxed = {
         category: item.category,
+        tradeCategory: (item.category === ItemCategory.Viscera && item.visceraSlot)
+          ? `viscera.${item.visceraSlot}`
+          : undefined,
         disabled: disabled
       }
     }

@@ -253,6 +253,13 @@ export interface TranslationDict {
   CHART_SULPHUR: string
   MERCENARY_LEVEL: string
   MERCENARY_BUILD: string
+  // fork: Viscera (optional until translated for every client language)
+  VISCERA_HELP?: string
+  VISCERA_TIER?: RegExp
+  VISCERA_SLOT_HEAD?: string
+  VISCERA_SLOT_ARM?: string
+  VISCERA_SLOT_BODY?: string
+  VISCERA_SLOT_LEG?: string
   // ---
   CHAT_SYSTEM: RegExp
   CHAT_TRADE: RegExp
