@@ -106,9 +106,10 @@ Known gaps:
 - **English clients only.** Base names and the `VISCERA_*` client strings exist only for `en`; other languages
   don't recognize Viscera (which is why those keys are optional in `TranslationDict`).
 - **No `Rarity:` line** in the item text. The parser assumes Normal, which is how trade lists them.
-- **Unmarked implicit with Ctrl+C.** The parser takes a section as the implicit if at least one of its lines parses
-  as a known stat, so a `Note: ~price` section isn't mistaken for it. Ctrl+Alt+C text has the
-  `{ Implicit Modifier }` header and is parsed normally.
+- **Unmarked implicit with Ctrl+C.** The parser takes a section as the implicit only if every one of its lines
+  parses as a known stat, so a `Note: ~price` section isn't mistaken for it. A Viscera whose implicit has a line
+  trade can't search (see below) therefore gets no implicit filters from Ctrl+C text. Ctrl+Alt+C text has the
+  `{ Implicit Modifier }` header and is parsed normally, with unknown lines listed as such.
 - **Heuristic stat polarity.** The 135 new stats got their `better`/`negate`/`inverted` values from the wording
   ("increased"/"reduced"/"more", "taken", "against you", ...), not a per-stat review. Some are wrong, e.g.
   "#% increased Mana Reservation of Skills" is marked as better when higher.

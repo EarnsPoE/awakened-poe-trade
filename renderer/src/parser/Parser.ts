@@ -1019,17 +1019,16 @@ function parseVisceraImplicit (section: string[], item: ParsedItem) {
   // Ctrl+Alt+C text marks it as "{ Implicit Modifier }", leave that to `parseModifiers`
   if (section.some(isModInfoLine)) return 'SECTION_SKIPPED'
 
-  // Ctrl+C text has the implicit unmarked; only take a section whose lines are known stats
-  // so that e.g. a "Note: ~price" section is not mistaken for it
+  // Ctrl+C text has the implicit unmarked; only take a section in which every line is
+  // a known stat, so that e.g. a "Note: ~price" section is not mistaken for it
   const probe: ParsedItem = { ...item, newMods: [], unknownModifiers: [] }
   parseStatsFromMod(section, probe, {
     info: { type: ModifierType.Implicit, tags: [] },
     stats: []
   })
-  if (!probe.newMods[0].stats.length) return 'SECTION_SKIPPED'
+  if (!probe.newMods[0].stats.length || probe.unknownModifiers.length) return 'SECTION_SKIPPED'
 
   item.newMods.push(...probe.newMods)
-  item.unknownModifiers.push(...probe.unknownModifiers)
   return 'SECTION_PARSED'
 }
 
