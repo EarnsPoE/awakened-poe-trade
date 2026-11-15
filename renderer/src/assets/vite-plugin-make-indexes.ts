@@ -7,6 +7,11 @@ export function makeIndexFilesPlugin (): Plugin {
 
   return {
     name: 'make-index-files',
+    // Runs before Vite scans public/, so on a clean checkout the generated
+    // *.index.bin files exist in time to be served instead of index.html
+    config () {
+      makeIndexFiles()
+    },
     buildStart () {
       makeIndexFiles()
     },

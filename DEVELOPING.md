@@ -68,3 +68,19 @@ Every id you add must exist on trade. Look it up in https://www.pathofexile.com/
 the entry whose `text` is the stat with its numbers as `#`, and use its `id` (e.g. `explicit.stat_3917489142`). The
 part after the dot is the stat hash, shared by that stat's `explicit.`, `implicit.`, ... variants. Open it once in a
 browser rather than scripting it, since the trade API rate-limits.
+
+# Fork: running the dev build
+
+Start `npm run dev` in `renderer` first, then in `main`. The overlay only registers hotkeys once the renderer has
+loaded its data and connected to main (127.0.0.1:8584), so a renderer that fails at startup looks like an app that
+ignores every hotkey.
+
+Vite reads the list of files in `renderer/public` once, when it starts. A file that appears there later (a branch
+switch that adds one, a new overrides file) is served as `index.html`, and the renderer fails to parse it. **After
+switching branches or adding a file under `renderer/public`, restart `npm run dev` in `renderer`, then in `main`.**
+The generated `*.index.bin` files are the exception: they're written in the plugin's `config` hook, before Vite
+looks at `public/`.
+
+The dev build uses the same `%APPDATA%\awakened-poe-trade` folder as an installed Awakened PoE Trade. It reads the
+installed app's settings but never saves changes to them (`ConfigStore` skips writes in dev). Close the installed app
+first, since both would grab the same hotkeys.
