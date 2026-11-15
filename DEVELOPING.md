@@ -110,9 +110,11 @@ Known gaps:
   parses as a known stat, so a `Note: ~price` section isn't mistaken for it. A Viscera whose implicit has a line
   trade can't search (see below) therefore gets no implicit filters from Ctrl+C text. Ctrl+Alt+C text has the
   `{ Implicit Modifier }` header and is parsed normally, with unknown lines listed as such.
-- **Heuristic stat polarity.** The 135 new stats got their `better`/`negate`/`inverted` values from the wording
-  ("increased"/"reduced"/"more", "taken", "against you", ...), not a per-stat review. Some are wrong, e.g.
-  "#% increased Mana Reservation of Skills" is marked as better when higher.
+- **Stat polarity.** The new stats' `better`/`negate`/`inverted` values were derived from the wording
+  ("increased"/"reduced"/"more", "taken", ...) and then reviewed by hand against the rolls on
+  https://poedb.tw/us/Viscera. Stats where a higher number is worse for the player (more reservation, more
+  physical damage taken per level, a larger Fire Exposure penalty given as a negative number, faster Taunted
+  enemies) are marked `better: -1`.
 - **No tier filter.** Trade groups Lesser and Greater under one base, so tier can't be searched on.
 - Not yet confirmed with a live price check in the overlay.
 
