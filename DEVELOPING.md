@@ -88,6 +88,11 @@ Keyed by client language like the stats file. Each entry is a record shaped like
 Overrides are only consulted when upstream has no base by that name, so an entry goes dead (and can be deleted)
 once upstream ships the base. Base names come from https://www.pathofexile.com/api/trade/data/items.
 
+Items that trade sells through bulk exchange (currency, fragments, ...) also carry `tradeTag`, the entry's `id` in
+https://www.pathofexile.com/api/trade/data/static, and `"exchangeable": true`. With a `tradeTag` the price check
+goes to bulk exchange instead of a search by base type. The other languages' names come from the same endpoint on
+that language's trade site (`ru.pathofexile.com`, `poe.kakaogames.com`, `pathofexile.tw`); the ids are shared.
+
 ## Viscera (Wickerman body parts)
 
 Supported through both files plus parser changes:
@@ -128,6 +133,20 @@ Known gaps:
   out until trade knows them.
 - **No tier filter.** Trade groups Lesser and Greater under one base, so tier can't be searched on.
 - Not yet confirmed with a live price check in the overlay.
+
+## Threads (Map Fragments)
+
+The Thread items poedb lists (https://poedb.tw/us/Threads#ThreadItem) are stackable and have no modifiers of their
+own, so they only need bases in `items-overrides.json`, in all four languages, each with its bulk exchange
+`tradeTag` and icon (checked 2026-11-15 against each trade site's `data/static`):
+
+- The ten typed Threads (Expedition, Abyss, Breach, Ritual, Ultimatum, Legion, Blight, Bestiary, Betrayal,
+  Incursion; item class Map Fragments, trade group "Fragments, Threads & Mapping").
+- Frayed Thread (Stackable Currency), which opens into a random Thread.
+- Two other new Thread-related items trade sells in bulk: Maven's Chisel of Threads and Threaded Delirium Orb.
+
+A Thread price check goes to bulk exchange like other fragments, with the copied stack size as the stock filter.
+No parser change was needed. Not yet confirmed with a live price check in the overlay.
 
 # Fork: running the dev build
 
