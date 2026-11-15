@@ -93,9 +93,12 @@ once upstream ships the base. Base names come from https://www.pathofexile.com/a
 Supported through both files plus parser changes:
 
 - `items-overrides.json`: the 161 bases in trade's `viscera` group (checked 2026-11-15, Covens league).
-- `stats-overrides.json`: 96 implicit trade ids attached to existing stats with `addTradeIds` (all languages), and
-  135 new English implicit stats. 20 area/map-only implicits ("Area contains…", "Map Crafting…", "Monster Level",
-  "Contains a Forge…") are skipped.
+- `stats-overrides.json`: 96 implicit trade ids attached to existing stats with `addTradeIds` (all languages),
+  138 new English implicit stats, and English matchers on 5 existing stats where the Viscera text words them
+  differently ("… Damage #% Faster", "Enemies within 3 metres are Scorched", "Consume a Corpse within 5 metres").
+  Stats whose text has no number but whose trade value is 100 ("Eat a Soul when …", "Trigger Level 1 Lesser Raise
+  Spiders on Kill") use a `value: 100` matcher. 20 area/map-only implicits ("Area contains…", "Map Crafting…",
+  "Monster Level", "Contains a Forge…") are skipped.
 - Parser (`renderer/src/parser/Parser.ts`): the class is detected by its Wickerman help text; the "Lesser "/"Greater "
   tier prefix is stripped, since trade only knows the plain base; the slot line (Head / Upper Limb / Torso /
   Lower Limb) selects the trade sub-category `viscera.head|arm|body|leg`.
@@ -115,6 +118,14 @@ Known gaps:
   https://poedb.tw/us/Viscera. Stats where a higher number is worse for the player (more reservation, more
   physical damage taken per level, a larger Fire Exposure penalty given as a negative number, faster Taunted
   enemies) are marked `better: -1`.
+- **Implicit lines trade can't search.** Trade has no stat for these, so they stay unknown (checked against
+  poedb and trade's stats list on 2026-11-15): "Kill Undead Enemies that have 15% or lower Life when Hit by your
+  Skills" (Noble's Head), "Melee Critical Strikes Poison the Enemy" (Inquisitor's Head), "Your chance to cause
+  monsters to Flee on Hit is also chance to Terrify Monsters on Hit" (Scarecrow's Pitchfork), "#% increased Action
+  Speed while Ignited" (Primate Foot), "Damaging Ailments inflicted by Minions deal damage #% Faster" (Infected
+  Leg), "Grants Level 1 Lesser Raise Spiders" and "Grants Level 20 Summon Void Spawn".
+- **Bases poedb lists but trade doesn't:** Hallowed Descry, Severed Scythe-hand, Spiked Carapace. They are left
+  out until trade knows them.
 - **No tier filter.** Trade groups Lesser and Greater under one base, so tier can't be searched on.
 - Not yet confirmed with a live price check in the overlay.
 
