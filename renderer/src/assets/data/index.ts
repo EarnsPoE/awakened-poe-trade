@@ -112,7 +112,11 @@ async function loadItems (language: string) {
 //  - `{ ref, matchers }` with `ref` of an existing stat: adds matchers to it
 //    (use when the game rewords a stat but the trade stat id is unchanged)
 //  - a full `Stat` (with `trade`) whose `ref` doesn't exist upstream: adds a new stat
-type StatOverride = Pick<Stat, 'ref' | 'matchers'> & Partial<Stat>
+//  - `{ ref, matchers: [], addTradeIds: { implicit: [...] } }` with `ref` of an existing stat:
+//    adds trade ids to it (use when trade gained a new id for an existing stat, e.g. a new implicit)
+type StatOverride = Pick<Stat, 'ref' | 'matchers'> & Partial<Stat> & {
+  addTradeIds?: Stat['trade']['ids']
+}
 
 let STAT_OVERRIDES: Record<string, StatOverride[]> = {}
 
@@ -121,12 +125,19 @@ function buildStatOverrides (language: string) {
   const byMatchStr = new Map<string, StatOverride>()
   const extraMatchersByRef = new Map<string, StatMatcher[]>()
   const addedByRef = new Map<string, Stat>()
+  const extraTradeIdsByRef = new Map<string, Stat['trade']['ids']>()
 
   for (const entry of entries) {
     for (const m of entry.matchers) {
       byMatchStr.set(m.advanced ?? m.string, entry)
     }
-    if (entry.trade) {
+    if (entry.addTradeIds) {
+      const ids = extraTradeIdsByRef.get(entry.ref) ?? {}
+      for (const [type, list] of Object.entries(entry.addTradeIds)) {
+        ids[type] = [...(ids[type] ?? []), ...list]
+      }
+      extraTradeIdsByRef.set(entry.ref, ids)
+    } else if (entry.trade) {
       addedByRef.set(entry.ref, entry as Stat)
     } else {
       const list = extraMatchersByRef.get(entry.ref) ?? []
@@ -135,9 +146,33 @@ function buildStatOverrides (language: string) {
     }
   }
 
+  function applyTradeIds (stats: Stat[]) {
+    for (const ref of new Set(stats.map(stat => stat.ref))) {
+      const extra = extraTradeIdsByRef.get(ref)
+      if (!extra) continue
+      const sameRef = stats.filter(stat => stat.ref === ref)
+      for (const [type, ids] of Object.entries(extra)) {
+        for (const id of ids) {
+          // a group can hold several stats with the same `ref` (e.g. local/global),
+          // pick the one that already uses this stat hash for another mod type
+          const hash = id.slice(id.indexOf('.'))
+          const targets = (sameRef.length > 1)
+            ? sameRef.filter(stat => Object.values(stat.trade.ids).some(list =>
+                list.some(own => own.slice(own.indexOf('.')) === hash)))
+            : sameRef
+          for (const stat of targets) {
+            const own = (stat.trade.ids[type] ??= [])
+            if (!own.includes(id)) own.push(id)
+          }
+        }
+      }
+    }
+  }
+
   function apply (statOrGroup: StatOrGroup): StatOrGroup {
-    if (!extraMatchersByRef.size) return statOrGroup
+    if (!extraMatchersByRef.size && !extraTradeIdsByRef.size) return statOrGroup
     const stats = ('stats' in statOrGroup) ? statOrGroup.stats : [statOrGroup]
+    applyTradeIds(stats)
     for (const stat of stats) {
       const extra = extraMatchersByRef.get(stat.ref)
       if (extra) {
