@@ -141,8 +141,11 @@ async function loadItems (language: string) {
 //  - a full `Stat` (with `trade`) whose `ref` doesn't exist upstream: adds a new stat
 //  - `{ ref, matchers: [], addTradeIds: { implicit: [...] } }` with `ref` of an existing stat:
 //    adds trade ids to it (use when trade gained a new id for an existing stat, e.g. a new implicit)
+//  - `{ ref, matchers: [], replaceTradeIds: { explicit: [...] } }` with `ref` of an existing stat:
+//    replaces all its trade ids (use when trade dropped the old id, which would fail the search)
 type StatOverride = Pick<Stat, 'ref' | 'matchers'> & Partial<Stat> & {
   addTradeIds?: Stat['trade']['ids']
+  replaceTradeIds?: Stat['trade']['ids']
 }
 
 let STAT_OVERRIDES: Record<string, StatOverride[]> = {}
@@ -153,12 +156,15 @@ function buildStatOverrides (language: string) {
   const extraMatchersByRef = new Map<string, StatMatcher[]>()
   const addedByRef = new Map<string, Stat>()
   const extraTradeIdsByRef = new Map<string, Stat['trade']['ids']>()
+  const replacedTradeIdsByRef = new Map<string, Stat['trade']['ids']>()
 
   for (const entry of entries) {
     for (const m of entry.matchers) {
       byMatchStr.set(m.advanced ?? m.string, entry)
     }
-    if (entry.addTradeIds) {
+    if (entry.replaceTradeIds) {
+      replacedTradeIdsByRef.set(entry.ref, entry.replaceTradeIds)
+    } else if (entry.addTradeIds) {
       const ids = extraTradeIdsByRef.get(entry.ref) ?? {}
       for (const [type, list] of Object.entries(entry.addTradeIds)) {
         ids[type] = [...(ids[type] ?? []), ...list]
@@ -174,6 +180,10 @@ function buildStatOverrides (language: string) {
   }
 
   function applyTradeIds (stats: Stat[]) {
+    for (const stat of stats) {
+      const replaced = replacedTradeIdsByRef.get(stat.ref)
+      if (replaced) stat.trade.ids = structuredClone(replaced)
+    }
     for (const ref of new Set(stats.map(stat => stat.ref))) {
       const extra = extraTradeIdsByRef.get(ref)
       if (!extra) continue
@@ -197,7 +207,7 @@ function buildStatOverrides (language: string) {
   }
 
   function apply (statOrGroup: StatOrGroup): StatOrGroup {
-    if (!extraMatchersByRef.size && !extraTradeIdsByRef.size) return statOrGroup
+    if (!extraMatchersByRef.size && !extraTradeIdsByRef.size && !replacedTradeIdsByRef.size) return statOrGroup
     const stats = ('stats' in statOrGroup) ? statOrGroup.stats : [statOrGroup]
     applyTradeIds(stats)
     for (const stat of stats) {
