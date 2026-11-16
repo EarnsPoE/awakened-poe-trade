@@ -28,6 +28,7 @@ export default {
         hotkey: null,
         wikiKey: null,
         poedbKey: null,
+        poedbModsKey: 'Alt + M',
         craftOfExileKey: null,
         stashSearchKey: null,
         maps: {

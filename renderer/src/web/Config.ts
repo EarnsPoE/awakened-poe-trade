@@ -406,6 +406,15 @@ function upgradeConfig (_config: Config): Config {
     }
   }
 
+  {
+    // fork: hotkey added without a configVersion bump, to stay mergeable with upstream
+    const itemCheck = config.widgets.find(w => w.wmType === 'item-check') as ItemCheckWidget
+    if (itemCheck.poedbModsKey === undefined) {
+      // a hotkey bound twice disables both, so only claim Alt + M if it is free
+      itemCheck.poedbModsKey = JSON.stringify(config).includes('"Alt + M"') ? null : 'Alt + M'
+    }
+  }
+
   if (config.configVersion < 17) {
     for (const widget of config.widgets) {
       for (let i = 0; i < widget.wmFlags.length; ++i) {
@@ -480,6 +489,12 @@ function getConfigForHost (): HostConfig {
     actions.push({
       shortcut: itemCheck.poedbKey,
       action: { type: 'copy-item', target: 'open-poedb' }
+    })
+  }
+  if (itemCheck.poedbModsKey) {
+    actions.push({
+      shortcut: itemCheck.poedbModsKey,
+      action: { type: 'copy-item', target: 'open-poedb-mods' }
     })
   }
   if (itemCheck.stashSearchKey) {
