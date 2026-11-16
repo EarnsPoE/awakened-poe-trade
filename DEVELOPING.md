@@ -66,6 +66,10 @@ The file is keyed by client language (`en`, `ru`, `ko`, `cmn-Hant`); a language 
   `{ "ref": "+# to maximum Fortification", "matchers": [], "addTradeIds": { "implicit": ["implicit.stat_335507772"] } }`
   If a stat group holds several stats with that `ref` (local and global variants), the id goes only to the one that
   already uses the same stat hash. Because `ref` is English everywhere, repeat the entry under every language.
+- **Replaced trade ids (`replaceTradeIds`).** Trade dropped the stat's old id and searching with it fails
+  ("Unknown stat provided"). Give the upstream `ref`, no matchers, and the full new ids by mod type; they replace
+  all of the stat's ids. Repeat the entry under every language:
+  `{ "ref": "Grants Call of Steel", "matchers": [], "replaceTradeIds": { "explicit": ["explicit.effect_3467858890"] } }`
 - **New stat.** The stat is missing upstream entirely. Add a full object shaped like a `stats.ndjson` line, including
   `trade.ids`, with a `ref` that doesn't exist upstream.
 
@@ -163,3 +167,18 @@ looks at `public/`.
 The dev build uses the same `%APPDATA%\awakened-poe-trade` folder as an installed Awakened PoE Trade. It reads the
 installed app's settings but never saves changes to them (`ConfigStore` skips writes in dev). Close the installed app
 first, since both would grab the same hotkeys.
+
+## Granted skills and supports ("Supported by", "Grants Level")
+
+Trade moved every "Socketed Gems are Supported by Level # …" and "Grants Level # …" / "Grants Summon …" stat to
+new `effect_<hash>` ids (one hash per gem, shared by explicit, implicit and enchant), and dropped most of the old
+`stat_<hash>` ids that upstream `stats.ndjson` still uses. The game text changed with it: supports now end in
+" Support" ("… Supported by Level 10 Increased Area of Effect Support") and granted skills no longer end in
+" Skill". Upstream doesn't recognize either wording, which includes the corrupted implicits on uniques.
+
+`stats-overrides.json` adds one English stat per `effect_` id in trade's stats list (checked 2026-11-16, Covens
+league), worded exactly like trade's text, with the ids for every mod type trade lists. Two stats whose text
+didn't change ("Grants Level # Savage Barnacle", "Grants Call of Steel") get `replaceTradeIds` in every language.
+"Grants Level # Herald of Agony" and "… Herald of Purity" exist on trade only as scourge mods, which APT doesn't
+search, so they're skipped. Other languages keep the upstream wording and ids, since the translated texts aren't
+known.
