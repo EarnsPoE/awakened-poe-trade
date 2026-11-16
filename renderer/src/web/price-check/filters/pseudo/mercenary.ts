@@ -1,6 +1,6 @@
 import { Stat, MercenaryBuild, stat } from '@/assets/data'
 import { ItemCategory, ParsedItem } from '@/parser'
-import { ModifierType, StatSource } from '@/parser/modifiers'
+import { ModifierType } from '@/parser/modifiers'
 import { findAndResolveByRef, metaNotFilter } from './utils'
 import { propToFilter } from './item-property'
 import { FilterTag, FilterOrGroup, FilterGroup, StatFilter } from '../interfaces'
@@ -76,13 +76,15 @@ export function createMercenaryFilters (item: ParsedItem): FilterOrGroup[] {
       const tier3Count = supports.filter(support =>
         support.stat.mercenary!.tier! >= 3 ||
         support.stat.modFamily?.at(-1) === support.stat.ref).length
-      filterGroup.stats.push(propToFilter({
+      const sixLink = propToFilter({
         ref: '6-Link',
         tradeId: 'item.mercenary_6link',
         roll: { min: 0, max: 5, value: tier3Count },
-        sources: possibleSupports.map(family => encodeFamilyToSource(family)),
+        sources: [],
         disabled: true
-      }, { filters: [], groups: [], item, searchInRange: 0, statsByType: [] }))
+      }, { filters: [], groups: [], item, searchInRange: 0, statsByType: [] })
+      sixLink.mercenaryFamilies = possibleSupports
+      filterGroup.stats.push(sixLink)
     }
 
     for (const support of supports) {
@@ -186,20 +188,6 @@ export enum SearchMode {
 
 function findGemByRef (name: string): Stat {
   return findAndResolveByRef(name, ModifierType.Pseudo, ItemCategory.MercenaryWarrant)
-}
-
-function encodeFamilyToSource (family: Stat[]): StatSource {
-  return {
-    modifier: {
-      info: undefined!,
-      stats: family.map(stat => ({ stat: stat, translation: undefined! }))
-    },
-    stat: undefined!
-  }
-}
-
-export function decodeFamilyFromSource (source: StatSource): Stat[] {
-  return source.modifier.stats.map(stat => stat.stat)
 }
 
 type SkillType = MercenaryBuild['skills'][number]['type']
