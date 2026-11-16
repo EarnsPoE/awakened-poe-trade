@@ -4,6 +4,9 @@ import * as I18n from './web/i18n'
 import * as Data from './assets/data'
 import { initConfig, AppConfig } from './web/Config'
 import { Host } from './web/background/IPC'
+import { installWedgeRecovery } from './web/background/wedge-recovery'
+
+installWedgeRecovery()
 
 ;(async function () {
   await initConfig()

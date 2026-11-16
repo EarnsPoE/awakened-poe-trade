@@ -24,6 +24,12 @@ if (process.platform !== 'darwin') {
 }
 app.enableSandbox()
 
+if (process.env.VITE_DEV_SERVER_URL) {
+  // Dev only: lets a debugger attach to a running overlay (e.g. a stuck UI)
+  // without restarting it. Chromium binds it to 127.0.0.1.
+  app.commandLine.appendSwitch('remote-debugging-port', '9222')
+}
+
 let tray: AppTray
 
 app.on('ready', async () => {

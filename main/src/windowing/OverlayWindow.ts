@@ -5,6 +5,8 @@ import type { ServerEvents } from '../server'
 import type { Logger } from '../RemoteLogger'
 import type { GameWindow } from './GameWindow'
 
+const MAX_CONSOLE_ERRORS_PER_MINUTE = 20
+
 export class OverlayWindow {
   public isInteractable = false
   public wasUsedRecently = true
@@ -45,6 +47,11 @@ export class OverlayWindow {
       { role: 'toggleDevTools' }
     ]))
 
+    this.window.webContents.on('console-message', this.handleConsoleMessage)
+    this.window.webContents.on('render-process-gone', (_, details) => {
+      this.logger.write(`error [Overlay] UI process gone (${details.reason}), reloading`)
+      this.window?.webContents.reload()
+    })
     this.window.webContents.on('before-input-event', this.handleExtraCommands)
     this.window.webContents.on('did-attach-webview', (_, webviewWebContents) => {
       webviewWebContents.on('before-input-event', this.handleExtraCommands)
@@ -101,6 +108,26 @@ export class OverlayWindow {
   updateOpts (overlayKey: string, windowTitle: string) {
     this.overlayKey = overlayKey
     this.poeWindow.attach(this.window, windowTitle)
+  }
+
+  // Copy the UI's errors into the log (and so into overlay.log), otherwise they
+  // only exist in DevTools and are lost when the overlay restarts.
+  private consoleErrors = { windowStart: 0, count: 0 }
+
+  private handleConsoleMessage = (e: Electron.Event<Electron.WebContentsConsoleMessageEventParams>) => {
+    if (e.level !== 'error') return
+
+    const now = Date.now()
+    if (now - this.consoleErrors.windowStart > 60_000) {
+      if (this.consoleErrors.count > MAX_CONSOLE_ERRORS_PER_MINUTE) {
+        this.logger.write(`error [Renderer] ... ${this.consoleErrors.count - MAX_CONSOLE_ERRORS_PER_MINUTE} more errors not logged`)
+      }
+      this.consoleErrors = { windowStart: now, count: 0 }
+    }
+    if (++this.consoleErrors.count > MAX_CONSOLE_ERRORS_PER_MINUTE) return
+
+    const source = e.sourceId ? ` (${e.sourceId.replace(/^https?:\/\/[^/]+/, '')}:${e.lineNumber})` : ''
+    this.logger.write(`error [Renderer] ${e.message.slice(0, 2000)}${source}`)
   }
 
   private handleExtraCommands = (event: Electron.Event, input: Electron.Input) => {
