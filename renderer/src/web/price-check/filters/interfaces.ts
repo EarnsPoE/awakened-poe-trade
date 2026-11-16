@@ -1,4 +1,5 @@
 import type { ItemInfluence, ItemCategory } from '@/parser'
+import type { Stat } from '@/assets/data'
 import { ModifierType, ModifierMechanic, type StatCalculated } from '@/parser/modifiers'
 
 export interface FilterPreset {
@@ -121,6 +122,8 @@ export interface StatFilter {
   tag: FilterTag
   oils?: string[]
   mercenary?: { icon?: string, tier?: number, maxTier?: boolean }
+  // "6-Link" filter of a Mercenary Warrant: support gem families the skill can link with
+  mercenaryFamilies?: Stat[][]
   sources: StatCalculated['sources']
   not?: true
   roll?: {
