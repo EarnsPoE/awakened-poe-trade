@@ -36,11 +36,12 @@ commands at the end regenerate the raw inventory to check against.
 17. [Uniques missing from upstream](#17-uniques-missing-from-upstream)
 18. [Reworded rarity, crafting bench and Vigilant Strike mods](#18-reworded-rarity-crafting-bench-and-vigilant-strike-mods)
 19. [Open prefix/suffix filters in the price check](#19-open-prefixsuffix-filters-in-the-price-check)
-20. [Overrides data at a glance](#20-overrides-data-at-a-glance)
-21. [Not on master](#21-not-on-master)
-22. [Known stale text](#22-known-stale-text)
-23. [Every file changed](#23-every-file-changed)
-24. [Regenerating this inventory](#24-regenerating-this-inventory)
+20. [Data files always revalidated](#20-data-files-always-revalidated)
+21. [Overrides data at a glance](#21-overrides-data-at-a-glance)
+22. [Not on master](#22-not-on-master)
+23. [Known stale text](#23-known-stale-text)
+24. [Every file changed](#24-every-file-changed)
+25. [Regenerating this inventory](#25-regenerating-this-inventory)
 
 ---
 
@@ -353,7 +354,16 @@ that says prefix or suffix).
 Suffixes: 1"; a magic item with only a prefix offers "Open Suffixes: 1". Replaces upstream's hidden "1 Empty or Crafted Modifier" filter, which only appeared on items with
 exactly 5 mods (or 6 with a craft).
 
-## 20. Overrides data at a glance
+## 20. Data files always revalidated
+
+**Commit:** `7b43102` · **File:** `renderer/src/assets/data/index.ts`
+
+The Vite dev server serves `public/` without `Cache-Control`, so Chromium could reuse a heuristically fresh cached
+copy of `stats-overrides.json` (or an ndjson / index file) across overlay restarts, and mods the fork already
+supports showed as unrecognized. Every data file is now fetched with `cache: 'no-cache'`, so each load revalidates;
+unchanged files still come back as 304. No visible change except that new data is always picked up after a restart.
+
+## 21. Overrides data at a glance
 
 Counts on `master` at `4655875`.
 
@@ -371,16 +381,16 @@ the Well skills. The 128 aliases are the Item Rarity suffix, 5 Viscera wordings,
 | `en` | 405 (161 Viscera bases, 8 Maven's Invitations, 13 Thread items, 222 uniques, 1 mercenary build) |
 | `ru`, `ko`, `cmn-Hant` (each) | 13 (Thread items) |
 
-## 21. Not on master
+## 22. Not on master
 
 All feature and fix branches are fully merged into `master`.
 
-## 22. Known stale text
+## 23. Known stale text
 
 None. `DEVELOPING.md` and the close prompt in `scripts/dev-clean-start.ps1` used to say the dev build never saves
 settings; both were corrected after section 10 landed.
 
-## 23. Every file changed
+## 24. Every file changed
 
 | File | +/- | Section |
 |---|---|---|
@@ -396,7 +406,7 @@ settings; both were corrected after section 10 landed.
 | `renderer/public/data/ko/app_i18n.json` | +1 | 7 |
 | `renderer/public/data/ru/app_i18n.json` | +1 | 7 |
 | `renderer/public/data/stats-overrides.json` | +945 (new) | 1, 2, 3, 5, 15, 16, 18 |
-| `renderer/src/assets/data/index.ts` | +145 -6 | 1, 5 |
+| `renderer/src/assets/data/index.ts` | +160 -13 | 1, 5, 20 |
 | `renderer/src/assets/data/interfaces.ts` | +7 | 3 |
 | `renderer/src/assets/vite-plugin-make-indexes.ts` | +5 | 11 |
 | `renderer/src/main.ts` | +3 | 9 |
@@ -421,7 +431,7 @@ settings; both were corrected after section 10 landed.
 | `scripts/install-dev-shortcut.ps1` | +23 (new) | 12 |
 
 
-## 24. Regenerating this inventory
+## 25. Regenerating this inventory
 
 ```sh
 base=$(git merge-base master origin/master)   # origin = upstream SnosMe/awakened-poe-trade
