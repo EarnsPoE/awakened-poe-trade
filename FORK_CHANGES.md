@@ -35,11 +35,12 @@ commands at the end regenerate the raw inventory to check against.
 16. [Chaplain of the Well mercenary build](#16-chaplain-of-the-well-mercenary-build)
 17. [Uniques missing from upstream](#17-uniques-missing-from-upstream)
 18. [Reworded rarity, crafting bench and Vigilant Strike mods](#18-reworded-rarity-crafting-bench-and-vigilant-strike-mods)
-19. [Overrides data at a glance](#19-overrides-data-at-a-glance)
-20. [Not on master](#20-not-on-master)
-21. [Known stale text](#21-known-stale-text)
-22. [Every file changed](#22-every-file-changed)
-23. [Regenerating this inventory](#23-regenerating-this-inventory)
+19. [Open prefix/suffix filters in the price check](#19-open-prefixsuffix-filters-in-the-price-check)
+20. [Overrides data at a glance](#20-overrides-data-at-a-glance)
+21. [Not on master](#21-not-on-master)
+22. [Known stale text](#22-known-stale-text)
+23. [Every file changed](#23-every-file-changed)
+24. [Regenerating this inventory](#24-regenerating-this-inventory)
 
 ---
 
@@ -335,7 +336,24 @@ The same comparison flagged about 95 map and atlas mods ("your Maps" to "Area", 
 Threads to Memory Traces, Harvest to Sacred Fauna / Flora). They are not aliased until a map paste confirms the
 in-game text.
 
-## 19. Overrides data at a glance
+## 19. Open prefix/suffix filters in the price check
+
+**Commit:** `ad581fa` · **Files:** `create-stat-filters.ts`, `interfaces.ts`, `pathofexile-trade.ts`,
+`en/app_i18n.json`
+
+Magic and rare weapons, armour, jewellery, quivers, jewels and abyss jewels get "Open Prefixes (empty or crafted):
+N" and/or "Open Suffixes (empty or crafted): N", off by default, only for a side that has a free slot (magic 1 per
+side; rare 3, or 2 on jewels). A
+master-crafted mod counts as open, since it can be removed at the bench. The query is a weighted group per side,
+`pseudo_number_of_empty_<side>_mods` + `pseudo_number_of_crafted_<side>_mods` >= N, so listings with a crafted mod
+in the slot match too. Shown only for identified, uncorrupted, unmirrored rares copied with Ctrl+Alt+C (the text
+that says prefix or suffix).
+
+**User-facing:** e.g. boots with 2 prefixes, 2 suffixes and a crafted suffix offer "Open Prefixes: 1" and "Open
+Suffixes: 1"; a magic item with only a prefix offers "Open Suffixes: 1". Replaces upstream's hidden "1 Empty or Crafted Modifier" filter, which only appeared on items with
+exactly 5 mods (or 6 with a craft).
+
+## 20. Overrides data at a glance
 
 Counts on `master` at `4655875`.
 
@@ -353,16 +371,16 @@ the Well skills. The 128 aliases are the Item Rarity suffix, 5 Viscera wordings,
 | `en` | 405 (161 Viscera bases, 8 Maven's Invitations, 13 Thread items, 222 uniques, 1 mercenary build) |
 | `ru`, `ko`, `cmn-Hant` (each) | 13 (Thread items) |
 
-## 20. Not on master
+## 21. Not on master
 
 All feature and fix branches are fully merged into `master`.
 
-## 21. Known stale text
+## 22. Known stale text
 
 None. `DEVELOPING.md` and the close prompt in `scripts/dev-clean-start.ps1` used to say the dev build never saves
 settings; both were corrected after section 10 landed.
 
-## 22. Every file changed
+## 23. Every file changed
 
 | File | +/- | Section |
 |---|---|---|
@@ -372,7 +390,7 @@ settings; both were corrected after section 10 landed.
 | `main/src/host-files/ConfigStore.ts` | +59 -8 | 10 |
 | `main/src/main.ts` | +6 | 9 |
 | `main/src/windowing/OverlayWindow.ts` | +27 | 9 |
-| `renderer/public/data/en/app_i18n.json` | +7 -1 | 3, 7 |
+| `renderer/public/data/en/app_i18n.json` | +9 -1 | 3, 7, 19 |
 | `renderer/public/data/en/client_strings.js` | +6 | 3 |
 | `renderer/public/data/items-overrides.json` | +454 (new) | 1, 3, 4, 14, 16, 17 |
 | `renderer/public/data/ko/app_i18n.json` | +1 | 7 |
@@ -395,14 +413,15 @@ settings; both were corrected after section 10 landed.
 | `renderer/src/web/price-check/filters/FilterName.vue` | +1 -1 | 3 |
 | `renderer/src/web/price-check/filters/create-item-filters.ts` | +5 -1 | 3, 6 |
 | `renderer/src/web/price-check/filters/create-presets.ts` | +2 -1 | 3 |
-| `renderer/src/web/price-check/filters/interfaces.ts` | +5 | 3, 8 |
+| `renderer/src/web/price-check/filters/create-stat-filters.ts` | +52 -43 | 19 |
+| `renderer/src/web/price-check/filters/interfaces.ts` | +7 | 3, 8, 19 |
 | `renderer/src/web/price-check/filters/pseudo/mercenary.ts` | +6 -18 | 8 |
-| `renderer/src/web/price-check/trade/pathofexile-trade.ts` | +5 -5 | 3, 8 |
+| `renderer/src/web/price-check/trade/pathofexile-trade.ts` | +28 -6 | 3, 8, 19 |
 | `scripts/dev-clean-start.ps1` | +488 (new) | 12 |
 | `scripts/install-dev-shortcut.ps1` | +23 (new) | 12 |
 
 
-## 23. Regenerating this inventory
+## 24. Regenerating this inventory
 
 ```sh
 base=$(git merge-base master origin/master)   # origin = upstream SnosMe/awakened-poe-trade
