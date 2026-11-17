@@ -51,7 +51,7 @@ runtime. In both, upstream data is looked up first and the overrides fill the ga
 | File | Applied by | Holds |
 |---|---|---|
 | `renderer/public/data/stats-overrides.json` | `buildStatOverrides` | reworded, missing or under-tagged stats |
-| `renderer/public/data/items-overrides.json` | `loadItems` | item bases missing upstream |
+| `renderer/public/data/items-overrides.json` | `loadItems` | item bases, uniques and mercenary builds missing upstream |
 
 ## stats-overrides.json
 
@@ -96,6 +96,15 @@ Items that trade sells through bulk exchange (currency, fragments, ...) also car
 https://www.pathofexile.com/api/trade/data/static, and `"exchangeable": true`. With a `tradeTag` the price check
 goes to bulk exchange instead of a search by base type. The other languages' names come from the same endpoint on
 that language's trade site (`ru.pathofexile.com`, `poe.kakaogames.com`, `pathofexile.tw`); the ids are shared.
+
+The same file holds other `items.ndjson` record kinds upstream is missing:
+
+- **Uniques** (`"namespace": "UNIQUE"`, `"unique": { "base": "<base type>" }`), named as on
+  https://www.pathofexile.com/api/trade/data/items. The base must be known, upstream or in this file. A unique whose
+  name upstream already knows on another base can't be fixed here, since overrides only apply to unknown names.
+- **Mercenary builds** (`"namespace": "MERCENARY_BUILD"`, `"mercenaryBuild": { "skills": [...] }`), with each skill's
+  `type` (`primary`, `secondary`, `utility`). Skills that are new must also be added as stats.
+- **Maven's Invitations** (`"craftable": { "category": "Invitation" }`), which the map check treats like maps.
 
 ## Viscera (Wickerman body parts)
 
@@ -152,24 +161,6 @@ own, so they only need bases in `items-overrides.json`, in all four languages, e
 A Thread price check goes to bulk exchange like other fragments, with the copied stack size as the stock filter.
 No parser change was needed. Not yet confirmed with a live price check in the overlay.
 
-# Fork: running the dev build
-
-Start `npm run dev` in `renderer` first, then in `main`. The overlay only registers hotkeys once the renderer has
-loaded its data and connected to main (127.0.0.1:8584), so a renderer that fails at startup looks like an app that
-ignores every hotkey.
-
-Vite reads the list of files in `renderer/public` once, when it starts. A file that appears there later (a branch
-switch that adds one, a new overrides file) is served as `index.html`, and the renderer fails to parse it. **After
-switching branches or adding a file under `renderer/public`, restart `npm run dev` in `renderer`, then in `main`.**
-The generated `*.index.bin` files are the exception: they're written in the plugin's `config` hook, before Vite
-looks at `public/`.
-
-The dev build uses the same `%APPDATA%\awakened-poe-trade` folder as an installed Awakened PoE Trade, so both read
-and write the same `apt-data\config.json`. Unlike upstream, the fork's dev build saves settings: each change is written
-atomically, the previous good copy is kept as `config.json.bak`, and loading falls back to it if `config.json` is
-unreadable (`main/src/host-files/ConfigStore.ts`). Close the installed app first, since both would grab the same
-hotkeys.
-
 ## Granted skills and supports ("Supported by", "Grants Level")
 
 Trade moved every "Socketed Gems are Supported by Level # …" and "Grants Level # …" / "Grants Summon …" stat to
@@ -184,3 +175,30 @@ didn't change ("Grants Level # Savage Barnacle", "Grants Call of Steel") get `re
 "Grants Level # Herald of Agony" and "… Herald of Purity" exist on trade only as scourge mods, which APT doesn't
 search, so they're skipped. Other languages keep the upstream wording and ids, since the translated texts aren't
 known.
+
+PoE's copied item text puts an invisible zero-width space (U+200B) right before the gem name in these lines. The
+parser strips zero-width characters from the clipboard text before matching (`parseClipboard` in
+`renderer/src/parser/Parser.ts`), so matchers are written without it. Text pasted from elsewhere has usually lost
+the character already, which is why a pasted copy can parse when the live clipboard didn't.
+
+# Fork: running the dev build
+
+Start `npm run dev` in `renderer` first, then in `main`. The overlay only registers hotkeys once the renderer has
+loaded its data and connected to main (127.0.0.1:8584), so a renderer that fails at startup looks like an app that
+ignores every hotkey.
+
+Vite reads the list of files in `renderer/public` once, when it starts. A file that appears there later (a branch
+switch that adds one, a new overrides file) is served as `index.html`, and the renderer fails to parse it. **After
+switching branches or adding a file under `renderer/public`, restart `npm run dev` in `renderer`, then in `main`.**
+The generated `*.index.bin` files are the exception: they're written in the plugin's `config` hook, before Vite
+looks at `public/`.
+
+Data files (ndjson, index and overrides files) are fetched with `cache: 'no-cache'`, because Vite serves `public/`
+without `Cache-Control` and Chromium would otherwise reuse a stale copy across restarts. Editing an overrides file
+and restarting the overlay is enough to pick up the change.
+
+The dev build uses the same `%APPDATA%\awakened-poe-trade` folder as an installed Awakened PoE Trade, so both read
+and write the same `apt-data\config.json`. Unlike upstream, the fork's dev build saves settings: each change is written
+atomically, the previous good copy is kept as `config.json.bak`, and loading falls back to it if `config.json` is
+unreadable (`main/src/host-files/ConfigStore.ts`). Close the installed app first, since both would grab the same
+hotkeys.

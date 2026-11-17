@@ -4,9 +4,10 @@ Everything this fork changes compared with upstream
 [SnosMe/awakened-poe-trade](https://github.com/SnosMe/awakened-poe-trade), grouped by feature.
 
 - **Upstream base:** `3188208` "use x11 for dev mode too" (2026-09-25), the merge base of `master` and
-  `origin/master`.
-- **Fork tip described here:** `master` at `4655875` (2026-11-17).
-- **Size:** 32 commits plus 8 merges, 35 files, +2996 / -46 lines (`git diff --stat 3188208 master`).
+  `upstream/master`.
+- **Fork tip described here:** `master` at `7e1c024` (2026-11-17), plus the documentation commit that updates this
+  file.
+- **Size at `7e1c024`:** 41 commits plus 12 merges, 38 files, +3285 / -101 lines (`git diff --stat 3188208 master`).
 
 Upstream's generated game data (`renderer/public/data/<lang>/stats.ndjson` and `items.ndjson`) is never edited.
 Data fixes live in two fork-owned overrides files that are layered on top at runtime, so upstream data can be
@@ -269,8 +270,9 @@ also generates them in its `config` hook. Developer-facing only.
 
 - `README.md`: "About this fork" section under the title (purpose, the overrides approach, link to upstream, credit
   and MIT License). `LICENSE` is unchanged.
-- `DEVELOPING.md`: "Fork: data overrides" (file table, entry kinds, confirming trade ids, items format, Viscera,
-  Threads, Supported by / Grants Level) and "Fork: running the dev build".
+- `DEVELOPING.md`: "Fork: data overrides" (file table, entry kinds, confirming trade ids, items format including
+  uniques, mercenary builds and Maven's Invitations, Viscera, Threads, Supported by / Grants Level and the
+  zero-width space) and "Fork: running the dev build" (including why data files are fetched with `no-cache`).
 - `FORK_CHANGES.md`: this file.
 
 ## 14. Maven's Invitations in the map check
@@ -316,7 +318,7 @@ build's PoEDB page; the trade ids come from the Mercenary group of the trade sta
 
 ## 17. Uniques missing from upstream
 
-**Commits:** `1ce9af4`, `757694e` · **Files:** `items-overrides.json` (data only)
+**Commits:** `9d3d52f`, `139871a` · **Files:** `items-overrides.json` (data only)
 
 Pasting a unique whose name upstream `items.ndjson` does not know fails the whole item with "unknown item". Added
 222 English unique entries on their existing bases: The Broken Elegy (Foul Staff) plus 221 name/base pairs that the
@@ -326,7 +328,7 @@ base are left alone, because item overrides only apply to names upstream does no
 
 ## 18. Reworded rarity, crafting bench and Vigilant Strike mods
 
-**Commit:** `7d42e52` · **Files:** `stats-overrides.json` (data only)
+**Commit:** `d28723f` · **Files:** `stats-overrides.json` (data only)
 
 Found by comparing every upstream stat with the live trade titles. Same change as section 2: the item rarity
 variants (during Effect, when on Low Life, from Slain Unique Enemies, Dropped by Frozen / Shocked / Magic Enemies,
@@ -341,7 +343,7 @@ in-game text.
 
 ## 19. Open prefix/suffix filters in the price check
 
-**Commit:** `ad581fa` · **Files:** `create-stat-filters.ts`, `interfaces.ts`, `pathofexile-trade.ts`,
+**Commit:** `abf4d50` · **Files:** `create-stat-filters.ts`, `interfaces.ts`, `pathofexile-trade.ts`,
 `en/app_i18n.json`
 
 Magic and rare weapons, armour, jewellery, quivers, jewels and abyss jewels get "Open Prefixes (empty or crafted):
@@ -358,7 +360,7 @@ exactly 5 mods (or 6 with a craft).
 
 ## 20. Data files always revalidated
 
-**Commit:** `7b43102` · **File:** `renderer/src/assets/data/index.ts`
+**Commit:** `6a0b565` · **File:** `renderer/src/assets/data/index.ts`
 
 The Vite dev server serves `public/` without `Cache-Control`, so Chromium could reuse a heuristically fresh cached
 copy of `stats-overrides.json` (or an ndjson / index file) across overlay restarts, and mods the fork already
@@ -367,7 +369,7 @@ unchanged files still come back as 304. No visible change except that new data i
 
 ## 21. Corruption implicits searched as implicits
 
-**Commit:** `846bfc5` · **Files:** `create-stat-filters.ts`, `pseudo/index.ts`, `interfaces.ts`,
+**Commit:** `c7627bc` · **Files:** `create-stat-filters.ts`, `pseudo/index.ts`, `interfaces.ts`,
 `FilterModifier.vue`, `en/app_i18n.json`
 
 Upstream folds every implicit into the pseudo totals and then drops the implicit's own filter. On a helmet whose
@@ -391,7 +393,7 @@ still folded into the pseudo totals as before.
 
 ## 22. Zero-width characters stripped from copied item text
 
-**Commit:** `df5ae3b` · **File:** `renderer/src/parser/Parser.ts` (`parseClipboard`)
+**Commit:** `464ea53` · **File:** `renderer/src/parser/Parser.ts` (`parseClipboard`)
 
 PoE's copied item text puts an invisible zero-width space (U+200B) right before the support gem name in
 "Socketed Gems are Supported by Level N X Support" lines. The stat matchers don't contain it, so every such line
@@ -404,7 +406,7 @@ corruption implicit and a Shaper sceptre's "Faster Attacks Support" hybrid suffi
 
 ## 23. Overrides data at a glance
 
-Counts on `master` at `4655875`.
+Counts on `master` at `7e1c024`.
 
 | `stats-overrides.json` | Entries | Alias | `addTradeIds` | `replaceTradeIds` | New stats |
 |---|---:|---:|---:|---:|---:|
@@ -433,8 +435,9 @@ settings; both were corrected after section 10 landed.
 
 | File | +/- | Section |
 |---|---|---|
-| `DEVELOPING.md` | +142 | 13 |
-| `README.md` | +17 | 13 |
+| `DEVELOPING.md` | +162 | 13 |
+| `FORK_CHANGES.md` | +487 (new) | 13 |
+| `README.md` | +16 | 13 |
 | `main/src/RemoteLogger.ts` | +24 -1 | 9 |
 | `main/src/host-files/ConfigStore.ts` | +59 -8 | 10 |
 | `main/src/main.ts` | +6 | 9 |
@@ -468,17 +471,17 @@ settings; both were corrected after section 10 landed.
 | `renderer/src/web/price-check/filters/pseudo/index.ts` | +16 -1 | 21 |
 | `renderer/src/web/price-check/filters/pseudo/mercenary.ts` | +6 -18 | 8 |
 | `renderer/src/web/price-check/trade/pathofexile-trade.ts` | +28 -6 | 3, 8, 19 |
-| `scripts/dev-clean-start.ps1` | +488 (new) | 12 |
+| `scripts/dev-clean-start.ps1` | +484 (new) | 12 |
 | `scripts/install-dev-shortcut.ps1` | +23 (new) | 12 |
-
 
 ## 27. Regenerating this inventory
 
 ```sh
-base=$(git merge-base master origin/master)   # origin = upstream SnosMe/awakened-poe-trade
+base=$(git merge-base master upstream/master)   # upstream = SnosMe/awakened-poe-trade
 git log --reverse --no-merges --format='%h %ad %s' --date=short "$base"..master
 git diff --stat "$base" master
 git branch --no-merged master
 ```
 
-If `origin` is renamed to `upstream` when the fork is published, use `upstream/master` instead.
+`origin` is the fork itself (`EarnsPoE/awakened-poe-trade`); add upstream with
+`git remote add upstream https://github.com/SnosMe/awakened-poe-trade` if it is missing.
