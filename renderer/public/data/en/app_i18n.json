@@ -59,6 +59,8 @@
     "map_item_rarity": "Item Rarity: {0}%",
     "map_pack_size": "Monster Pack Size: {0}%",
     "has_empty_modifier": "1 Empty or Crafted Modifier",
+    "open_prefixes": "Open Prefixes (empty or crafted): {0}",
+    "open_suffixes": "Open Suffixes (empty or crafted): {0}",
     "mercenary_6link": "6-Link with {0} Support Gems of Tier 3",
     "item_level": "Item Level: {0}",
     "stock": "Stock: {0}",
