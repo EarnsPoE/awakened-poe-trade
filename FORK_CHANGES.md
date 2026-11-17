@@ -38,11 +38,12 @@ commands at the end regenerate the raw inventory to check against.
 19. [Open prefix/suffix filters in the price check](#19-open-prefixsuffix-filters-in-the-price-check)
 20. [Data files always revalidated](#20-data-files-always-revalidated)
 21. [Corruption implicits searched as implicits](#21-corruption-implicits-searched-as-implicits)
-22. [Overrides data at a glance](#22-overrides-data-at-a-glance)
-23. [Not on master](#23-not-on-master)
-24. [Known stale text](#24-known-stale-text)
-25. [Every file changed](#25-every-file-changed)
-26. [Regenerating this inventory](#26-regenerating-this-inventory)
+22. [Zero-width characters stripped from copied item text](#22-zero-width-characters-stripped-from-copied-item-text)
+23. [Overrides data at a glance](#23-overrides-data-at-a-glance)
+24. [Not on master](#24-not-on-master)
+25. [Known stale text](#25-known-stale-text)
+26. [Every file changed](#26-every-file-changed)
+27. [Regenerating this inventory](#27-regenerating-this-inventory)
 
 ---
 
@@ -388,7 +389,20 @@ priced very differently, so:
 `implicit.stat_2901986750`, instead of the pseudo total. Base implicits (e.g. a Ruby Ring's fire resistance) are
 still folded into the pseudo totals as before.
 
-## 22. Overrides data at a glance
+## 22. Zero-width characters stripped from copied item text
+
+**Commit:** `df5ae3b` · **File:** `renderer/src/parser/Parser.ts` (`parseClipboard`)
+
+PoE's copied item text puts an invisible zero-width space (U+200B) right before the support gem name in
+"Socketed Gems are Supported by Level N X Support" lines. The stat matchers don't contain it, so every such line
+showed as "Not recognized modifier", even with the matching `effect_` stats from section 5 loaded. The character is
+lost when the text is pasted elsewhere, so a pasted copy of the item parses fine. `parseClipboard` now removes
+U+200B-U+200D, U+2060 and U+FEFF before anything else.
+
+**User-facing:** e.g. Hegemony's Era's "Socketed Gems are Supported by Level 10 Increased Area of Effect Support"
+corruption implicit and a Shaper sceptre's "Faster Attacks Support" hybrid suffix are recognized and searchable.
+
+## 23. Overrides data at a glance
 
 Counts on `master` at `4655875`.
 
@@ -406,16 +420,16 @@ the Well skills. The 128 aliases are the Item Rarity suffix, 5 Viscera wordings,
 | `en` | 405 (161 Viscera bases, 8 Maven's Invitations, 13 Thread items, 222 uniques, 1 mercenary build) |
 | `ru`, `ko`, `cmn-Hant` (each) | 13 (Thread items) |
 
-## 23. Not on master
+## 24. Not on master
 
 All feature and fix branches are fully merged into `master`.
 
-## 24. Known stale text
+## 25. Known stale text
 
 None. `DEVELOPING.md` and the close prompt in `scripts/dev-clean-start.ps1` used to say the dev build never saves
 settings; both were corrected after section 10 landed.
 
-## 25. Every file changed
+## 26. Every file changed
 
 | File | +/- | Section |
 |---|---|---|
@@ -436,7 +450,7 @@ settings; both were corrected after section 10 landed.
 | `renderer/src/assets/vite-plugin-make-indexes.ts` | +5 | 11 |
 | `renderer/src/main.ts` | +3 | 9 |
 | `renderer/src/parser/ParsedItem.ts` | +2 | 3 |
-| `renderer/src/parser/Parser.ts` | +47 | 3 |
+| `renderer/src/parser/Parser.ts` | +51 | 3, 22 |
 | `renderer/src/parser/meta.ts` | +2 -1 | 3 |
 | `renderer/src/web/Config.ts` | +15 | 7 |
 | `renderer/src/web/background/wedge-recovery.ts` | +77 (new) | 9 |
@@ -458,7 +472,7 @@ settings; both were corrected after section 10 landed.
 | `scripts/install-dev-shortcut.ps1` | +23 (new) | 12 |
 
 
-## 26. Regenerating this inventory
+## 27. Regenerating this inventory
 
 ```sh
 base=$(git merge-base master origin/master)   # origin = upstream SnosMe/awakened-poe-trade
