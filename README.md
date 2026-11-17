@@ -11,8 +11,7 @@ and `items.ndjson`) is left untouched, and the fork's fixes live in separate, ha
 Upstream data can therefore be re-synced as-is. See [DEVELOPING.md](./DEVELOPING.md#fork-data-overrides) for the
 file formats.
 
-Added so far: the reworded "+#% to Item Rarity" suffix, and the Viscera (Wickerman body parts) item class, with
-[known gaps](./DEVELOPING.md#viscera-wickerman-body-parts).
+For the full list of what the fork adds or fixes, see [FORK_CHANGES.md](./FORK_CHANGES.md).
 
 All credit for the app goes to Alexander Drozdov and the upstream contributors. Like upstream, the fork is
 distributed under the [MIT License](./LICENSE). For the official release, issues and support, use upstream.
