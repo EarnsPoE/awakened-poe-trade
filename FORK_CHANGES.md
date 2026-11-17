@@ -5,7 +5,7 @@ Everything this fork changes compared with upstream
 
 - **Upstream base:** `3188208` "use x11 for dev mode too" (2026-09-25), the merge base of `master` and
   `origin/master`.
-- **Fork tip described here:** `master` at `6b2c19e` (2026-11-16).
+- **Fork tip described here:** `master` at `bdce9ab` (2026-11-16).
 - **Size:** 21 commits plus 5 merges, 34 files, +2281 / -46 lines (`git diff --stat 3188208 master`).
 
 Upstream's generated game data (`renderer/public/data/<lang>/stats.ndjson` and `items.ndjson`) is never edited.
@@ -40,7 +40,7 @@ commands at the end regenerate the raw inventory to check against.
 
 ## 1. Data overrides layer
 
-**Commits:** `f9625bb` (stats layer), `f61cf82` (`addTradeIds`), `c77461c` (items layer), `4123ecb`
+**Commits:** `2af2041` (stats layer), `6d00f64` (`addTradeIds`), `1617cb5` (items layer), `c429c36`
 (`replaceTradeIds`)
 **Files:** `renderer/src/assets/data/index.ts`, `renderer/public/data/stats-overrides.json`,
 `renderer/public/data/items-overrides.json`
@@ -70,7 +70,7 @@ Format and how to confirm trade ids: `DEVELOPING.md`, "Fork: data overrides".
 
 ## 2. Reworded "+#% to Item Rarity" suffix
 
-**Commit:** `913e933` · **File:** `stats-overrides.json` (data only)
+**Commit:** `f094c88` · **File:** `stats-overrides.json` (data only)
 
 The game now prints the "of Raiding"-family suffix as `+X% to Item Rarity` instead of
 `X% increased Rarity of Items found`, so upstream didn't recognise it and price checks dropped the mod. An English
@@ -80,8 +80,8 @@ alias matcher on the existing stat fixes it; the trade id (`explicit.stat_391748
 
 ## 3. Viscera item class
 
-**Commits:** `54339cf` (parser and trade), `9086734` (bases and stats), `be01034` (docs), `e59e411` (stricter
-implicit detection), `5995097` (stat polarity), `2d5c76d` (missed wordings)
+**Commits:** `bd42d6e` (parser and trade), `a38209b` (bases and stats), `634a054` (docs), `ccff8a1` (stricter
+implicit detection), `f4520ee` (stat polarity), `d8a33e4` (missed wordings)
 **Files:** `renderer/src/parser/Parser.ts`, `ParsedItem.ts`, `meta.ts`, `renderer/src/assets/data/interfaces.ts`,
 `renderer/public/data/en/client_strings.js`, `renderer/public/data/en/app_i18n.json`,
 `renderer/src/web/price-check/filters/{FilterName.vue,create-item-filters.ts,create-presets.ts,interfaces.ts}`,
@@ -115,7 +115,7 @@ doesn't.
 
 ## 4. Thread fragment items
 
-**Commit:** `071c719` · **Files:** `items-overrides.json`, `DEVELOPING.md` (data only)
+**Commit:** `ca9fdec` · **Files:** `items-overrides.json`, `DEVELOPING.md` (data only)
 
 Threads are new this league and were "unknown item". Added for `en`, `ru`, `ko` and `cmn-Hant`, with the bulk
 exchange `tradeTag`, `exchangeable: true` and icons from each trade site's `/api/trade/data/static` (2026-11-15):
@@ -130,7 +130,7 @@ all four client languages. No parser change.
 
 ## 5. "Supported by" and "Grants Level" mods on new trade ids
 
-**Commits:** `4123ecb` (`replaceTradeIds` kind), `028f4af` (data) · merged in `0bdf802`
+**Commits:** `c429c36` (`replaceTradeIds` kind), `0c2cc61` (data) · merged in `8a0c48e`
 **Files:** `renderer/src/assets/data/index.ts`, `stats-overrides.json`, `DEVELOPING.md`
 
 Trade moved every "Socketed Gems are Supported by Level # ..." and "Grants Level # ..." / "Grants Summon ..." stat
@@ -148,7 +148,7 @@ searchable filter (`implicit.effect_3737592146`), and searches no longer fail on
 
 ## 6. Magic rarity chip in the default price-check preset
 
-**Commit:** `5c568f4` · **File:** `renderer/src/web/price-check/filters/create-item-filters.ts`
+**Commit:** `c1aeda8` · **File:** `renderer/src/web/price-check/filters/create-item-filters.ts`
 
 The default "Pseudo" preset for an identified Magic item sent `rarity: nonunique` with no rarity control, so rares
 were mixed into the results. `createFilters` now creates the off-by-default Magic chip for every preset of a Magic
@@ -160,7 +160,7 @@ logbooks / charts and flasks / tinctures / charms (no chip) are unchanged.
 
 ## 7. PoEDB item class modifiers hotkey (Alt + M)
 
-**Commit:** `c508826` · merged in `13da4db`
+**Commit:** `3fc6001` · merged in `3d01431`
 **Files:** `renderer/src/web/item-check/poedb-mods.ts` (new), `hotkeyable-actions.ts`, `WidgetItemCheck.vue`,
 `settings-item-check.vue`, `widget.ts`, `renderer/src/web/Config.ts`, `app_i18n.json` (`en`, `ru`, `ko`)
 
@@ -178,7 +178,7 @@ Alt + D still opens the base item page.
 
 ## 8. Mercenary Warrant 6-Link crash fix
 
-**Commit:** `8864e9d` · merged in `03dc786`
+**Commit:** `f7da8b4` · merged in `0a9d231`
 **Files:** `renderer/src/web/price-check/filters/pseudo/mercenary.ts`, `filters/interfaces.ts`,
 `trade/pathofexile-trade.ts`
 
@@ -191,7 +191,7 @@ filter passed support-gem families through `sources` as fake `StatSource`s. They
 
 ## 9. Recovery from a wedged overlay UI, and a persistent log
 
-**Commit:** `0eceddc`
+**Commit:** `2238bb4`
 **Files:** `renderer/src/web/background/wedge-recovery.ts` (new), `renderer/src/main.ts`, `main/src/main.ts`,
 `main/src/RemoteLogger.ts`, `main/src/windowing/OverlayWindow.ts`
 
@@ -212,7 +212,7 @@ patch throws "Cannot read properties of null (reading 'emitsOptions')".
 
 ## 10. Settings saved in the dev build, atomically with a backup
 
-**Commit:** `158bace` · merged in `fe20a2a` · **File:** `main/src/host-files/ConfigStore.ts`
+**Commit:** `e604519` · merged in `8fc032e` · **File:** `main/src/host-files/ConfigStore.ts`
 
 Upstream skips settings saves in dev builds; the fork runs the dev build day to day, so edits were lost on restart
 and on wedge-recovery reloads.
@@ -229,7 +229,7 @@ that the dev build and an installed Awakened PoE Trade share `%APPDATA%\awakened
 
 ## 11. Dev build: data index files generated before Vite starts
 
-**Commit:** `30da9f4` · **Files:** `renderer/src/assets/vite-plugin-make-indexes.ts`, `DEVELOPING.md`
+**Commit:** `94cf90c` · **Files:** `renderer/src/assets/vite-plugin-make-indexes.ts`, `DEVELOPING.md`
 
 On a clean checkout the gitignored `renderer/public/data/<lang>/*.index.bin` files were generated after Vite had
 cached the `public/` listing, so they were served as `index.html` and the renderer died with
@@ -238,7 +238,7 @@ also generates them in its `config` hook. Developer-facing only.
 
 ## 12. Dev build: one-click clean start
 
-**Commit:** `c6fa594` · merged in `6b2c19e`
+**Commit:** `51d2f67` · merged in `bdce9ab`
 **Files:** `scripts/dev-clean-start.ps1`, `scripts/install-dev-shortcut.ps1` (both new)
 
 `dev-clean-start.ps1` brings the dev build up from a known state:
@@ -255,8 +255,8 @@ also generates them in its `config` hook. Developer-facing only.
 
 ## 13. Documentation
 
-**Commits:** `0ad889a`, `be01034`, plus doc updates in `f9625bb`, `30da9f4`, `e59e411`, `5995097`, `2d5c76d`,
-`071c719`, `028f4af`
+**Commits:** `d896ec8`, `634a054`, plus doc updates in `2af2041`, `94cf90c`, `ccff8a1`, `f4520ee`, `d8a33e4`,
+`ca9fdec`, `0c2cc61`
 
 - `README.md`: "About this fork" section under the title (purpose, the overrides approach, link to upstream, credit
   and MIT License). `LICENSE` is unchanged.
@@ -266,7 +266,7 @@ also generates them in its `config` hook. Developer-facing only.
 
 ## 14. Overrides data at a glance
 
-Counts on `master` at `6b2c19e`.
+Counts on `master` at `bdce9ab`.
 
 | `stats-overrides.json` | Entries | Alias | `addTradeIds` | `replaceTradeIds` | New stats |
 |---|---:|---:|---:|---:|---:|
@@ -283,12 +283,11 @@ are the Item Rarity suffix and 5 Viscera wordings. 95 `addTradeIds` entries carr
 
 ## 15. Not on master
 
-- **Rare/unique-nearby attack speed mod:** in progress in another thread, not committed to `master` yet. Add it
-  here when it lands.
-- `backup/stat-overrides-20261115` and `backup/viscera-20261115`: pre-rewrite snapshots kept before the history was
-  cleaned up on 2026-11-15. Their content is on `master` in rewritten form; they are not separate features.
+- **"within N metres" wording of nearby mods:** branch `feature/rare-unique-within-metres` (2 commits) matches the
+  "within N metres" wording of nearby mods and of the Order suffix mods. Not merged yet; add a section here when it
+  lands.
 
-All other local branches (`fork/*`, `feature/*`, `fix/*`) are fully merged into `master`.
+All other feature and fix branches are fully merged into `master`.
 
 ## 16. Known stale text
 
