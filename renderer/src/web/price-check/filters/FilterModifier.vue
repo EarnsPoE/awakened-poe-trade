@@ -69,8 +69,12 @@
         <div class="flex-1 min-w-0 flex items-start gap-x-2">
           <span v-if="filter.not"
             :class="[$style['tag'], $style['tag-not']]">{{ t('filters.tag_not') }}</span>
-          <span v-if="showTag"
-            :class="[$style['tag'], $style[`tag-${tag}`]]">{{ t(`filters.tag_${tag.replace('-', '_')}`) }}{{ (filter.sources.length > 1) ? ` x ${filter.sources.length}` : null }}</span>
+          <button v-if="showTag && filter.altType" type="button"
+            :class="[$style['tag'], $style[`tag-${tag}`], $style.tagSwitch]"
+            :title="t('filters.tag_switch', [t(`filters.tag_${filter.altType.tag}`)])"
+            @click="switchType">{{ tagText }}<i class="fas fa-exchange-alt" /></button>
+          <span v-else-if="showTag"
+            :class="[$style['tag'], $style[`tag-${tag}`]]">{{ tagText }}</span>
           <filter-modifier-tiers v-if="!showBounds()"
             :filter="filter" :item="item" />
           <filter-modifier-options v-if="rollOptions"
@@ -238,6 +242,16 @@ export default defineComponent({
       }
     }
 
+    // swap implicit <-> explicit search for the same stat
+    function switchType () {
+      const { altType } = props.filter
+      if (!altType) return
+      props.filter.altType = { tradeId: props.filter.tradeId, tag: props.filter.tag }
+      props.filter.tradeId = altType.tradeId
+      props.filter.tag = altType.tag
+      props.filter.disabled = false
+    }
+
     const { t } = useI18n()
 
     return {
@@ -257,6 +271,9 @@ export default defineComponent({
         set (value: '' | number | undefined) { props.filter.roll!.max = value }
       }),
       tag: computed(() => props.filter.tag),
+      tagText: computed(() =>
+        t(`filters.tag_${props.filter.tag.replace('-', '_')}`) +
+        ((props.filter.sources.length > 1) ? ` x ${props.filter.sources.length}` : '')),
       miniFilter: computed(() => !props.filter.hidden && (
         props.filter.tag === FilterTag.MercenarySupport ||
         (props.filter.tag === FilterTag.Property && props.item.info.refName === 'Mercenary Warrant') ||
@@ -327,7 +344,8 @@ export default defineComponent({
       inputFocus,
       toggleFilter,
       toggleExpanded,
-      smartToggle
+      smartToggle,
+      switchType
     }
   }
 })
@@ -524,6 +542,19 @@ export default defineComponent({
 .tag-filter-group {
   @apply -mx-1 text-gray-600;
   text-shadow: 0 0 4px theme('colors.gray.900');
+}
+.tagSwitch {
+  cursor: pointer;
+
+  & > i {
+    font-size: 0.625rem;
+    margin-left: theme('spacing.1');
+    opacity: 0.6;
+  }
+
+  &:hover > i {
+    opacity: 1;
+  }
 }
 .tag-scourge {
   @apply bg-orange-600 text-white; }

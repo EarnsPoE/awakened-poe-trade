@@ -37,11 +37,12 @@ commands at the end regenerate the raw inventory to check against.
 18. [Reworded rarity, crafting bench and Vigilant Strike mods](#18-reworded-rarity-crafting-bench-and-vigilant-strike-mods)
 19. [Open prefix/suffix filters in the price check](#19-open-prefixsuffix-filters-in-the-price-check)
 20. [Data files always revalidated](#20-data-files-always-revalidated)
-21. [Overrides data at a glance](#21-overrides-data-at-a-glance)
-22. [Not on master](#22-not-on-master)
-23. [Known stale text](#23-known-stale-text)
-24. [Every file changed](#24-every-file-changed)
-25. [Regenerating this inventory](#25-regenerating-this-inventory)
+21. [Corruption implicits searched as implicits](#21-corruption-implicits-searched-as-implicits)
+22. [Overrides data at a glance](#22-overrides-data-at-a-glance)
+23. [Not on master](#23-not-on-master)
+24. [Known stale text](#24-known-stale-text)
+25. [Every file changed](#25-every-file-changed)
+26. [Regenerating this inventory](#26-regenerating-this-inventory)
 
 ---
 
@@ -363,7 +364,31 @@ copy of `stats-overrides.json` (or an ndjson / index file) across overlay restar
 supports showed as unrecognized. Every data file is now fetched with `cache: 'no-cache'`, so each load revalidates;
 unchanged files still come back as 304. No visible change except that new data is always picked up after a restart.
 
-## 21. Overrides data at a glance
+## 21. Corruption implicits searched as implicits
+
+**Commit:** `846bfc5` · **Files:** `create-stat-filters.ts`, `pseudo/index.ts`, `interfaces.ts`,
+`FilterModifier.vue`, `en/app_i18n.json`
+
+Upstream folds every implicit into the pseudo totals and then drops the implicit's own filter. On a helmet whose
+only resistance is a "+14% to all Elemental Resistances" corruption implicit, the price check offered just "42%
+total Elemental Resistance", which also matches helmets with 42% from explicit mods. Corrupted implicits are
+priced very differently, so:
+
+- A corruption implicit (recognised from the Ctrl+Alt+C text) always keeps its own filter on the implicit trade
+  id, tagged "corrupted" and checked by default.
+- Pseudo totals keep counting it, because trade's pseudo stats include implicits (checked live: implicit all-res
+  >= 14 together with pseudo total 42-44 returns helmets with no explicit resistance). Subtracting it would make
+  the total searched too loose. A pseudo made only of corruption implicits is dropped, since it would just repeat
+  the implicit filter.
+- Implicit and explicit stat filters whose stat exists as both on trade can be switched: clicking the tag
+  (marked with a swap icon) searches the same stat as the other mod type and checks the filter. Not offered for
+  explicits on uniques.
+
+**User-facing:** the helmet above shows "+14% to all Elemental Resistances", tag "corrupted", searching
+`implicit.stat_2901986750`, instead of the pseudo total. Base implicits (e.g. a Ruby Ring's fire resistance) are
+still folded into the pseudo totals as before.
+
+## 22. Overrides data at a glance
 
 Counts on `master` at `4655875`.
 
@@ -381,16 +406,16 @@ the Well skills. The 128 aliases are the Item Rarity suffix, 5 Viscera wordings,
 | `en` | 405 (161 Viscera bases, 8 Maven's Invitations, 13 Thread items, 222 uniques, 1 mercenary build) |
 | `ru`, `ko`, `cmn-Hant` (each) | 13 (Thread items) |
 
-## 22. Not on master
+## 23. Not on master
 
 All feature and fix branches are fully merged into `master`.
 
-## 23. Known stale text
+## 24. Known stale text
 
 None. `DEVELOPING.md` and the close prompt in `scripts/dev-clean-start.ps1` used to say the dev build never saves
 settings; both were corrected after section 10 landed.
 
-## 24. Every file changed
+## 25. Every file changed
 
 | File | +/- | Section |
 |---|---|---|
@@ -400,7 +425,7 @@ settings; both were corrected after section 10 landed.
 | `main/src/host-files/ConfigStore.ts` | +59 -8 | 10 |
 | `main/src/main.ts` | +6 | 9 |
 | `main/src/windowing/OverlayWindow.ts` | +27 | 9 |
-| `renderer/public/data/en/app_i18n.json` | +9 -1 | 3, 7, 19 |
+| `renderer/public/data/en/app_i18n.json` | +10 -1 | 3, 7, 19, 21 |
 | `renderer/public/data/en/client_strings.js` | +6 | 3 |
 | `renderer/public/data/items-overrides.json` | +454 (new) | 1, 3, 4, 14, 16, 17 |
 | `renderer/public/data/ko/app_i18n.json` | +1 | 7 |
@@ -423,15 +448,17 @@ settings; both were corrected after section 10 landed.
 | `renderer/src/web/price-check/filters/FilterName.vue` | +1 -1 | 3 |
 | `renderer/src/web/price-check/filters/create-item-filters.ts` | +5 -1 | 3, 6 |
 | `renderer/src/web/price-check/filters/create-presets.ts` | +2 -1 | 3 |
-| `renderer/src/web/price-check/filters/create-stat-filters.ts` | +52 -43 | 19 |
-| `renderer/src/web/price-check/filters/interfaces.ts` | +7 | 3, 8, 19 |
+| `renderer/src/web/price-check/filters/FilterModifier.vue` | +34 -3 | 21 |
+| `renderer/src/web/price-check/filters/create-stat-filters.ts` | +66 -43 | 19, 21 |
+| `renderer/src/web/price-check/filters/interfaces.ts` | +10 | 3, 8, 19, 21 |
+| `renderer/src/web/price-check/filters/pseudo/index.ts` | +16 -1 | 21 |
 | `renderer/src/web/price-check/filters/pseudo/mercenary.ts` | +6 -18 | 8 |
 | `renderer/src/web/price-check/trade/pathofexile-trade.ts` | +28 -6 | 3, 8, 19 |
 | `scripts/dev-clean-start.ps1` | +488 (new) | 12 |
 | `scripts/install-dev-shortcut.ps1` | +23 (new) | 12 |
 
 
-## 25. Regenerating this inventory
+## 26. Regenerating this inventory
 
 ```sh
 base=$(git merge-base master origin/master)   # origin = upstream SnosMe/awakened-poe-trade
