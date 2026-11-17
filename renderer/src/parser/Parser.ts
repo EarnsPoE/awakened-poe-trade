@@ -94,6 +94,10 @@ const parsers: Array<ParserFn | { virtual: VirtualParserFn }> = [
 const VALUE_AUGMENTED = ' (augmented)'
 
 export function parseClipboard (clipboard: string): Result<ParsedItem, string> {
+  // PoE's copied text puts a U+200B before support gem names in
+  // "Socketed Gems are Supported by Level N \u200BX Support" lines (seen 2026-11-17),
+  // which broke stat matching. Strip zero-width characters before anything else.
+  clipboard = clipboard.replace(/[\u200B-\u200D\u2060\uFEFF]/g, '')
   try {
     let sections = itemTextToSections(clipboard)
 
