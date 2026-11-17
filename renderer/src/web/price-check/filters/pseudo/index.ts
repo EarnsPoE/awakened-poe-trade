@@ -1,6 +1,6 @@
 import { stat, pseudoStatByRef } from '@/assets/data'
 import { ItemRarity } from '@/parser/ParsedItem'
-import { ModifierType, StatCalculated, StatSource } from '@/parser/modifiers'
+import { ModifierMechanic, ModifierType, StatCalculated, StatSource } from '@/parser/modifiers'
 import { calculatedStatToFilter, FiltersCreationContext } from '../create-stat-filters'
 import type { StatFilter } from '../interfaces'
 
@@ -327,6 +327,10 @@ export function filterPseudo (ctx: FiltersCreationContext) {
     })
     if (!sources.length) continue
 
+    // a total made only of corruption implicits would just repeat
+    // the implicit filter, which is shown on its own (see below)
+    if (sources.every(isCorruptionImplicit)) continue
+
     if (rule.stats.some(s => s.required)) {
       for (const stat of rule.stats) {
         if (stat.required && !sources.some(source =>
@@ -374,7 +378,11 @@ export function filterPseudo (ctx: FiltersCreationContext) {
     }
   }
 
+  // Corruption implicits are priced very differently from explicits,
+  // so they keep their own implicit filter even when a pseudo total
+  // used them. The total still counts them, like trade's pseudo stats.
   ctx.statsByType = ctx.statsByType.filter(m =>
+    m.sources.some(isCorruptionImplicit) ||
     !appliedRules.some(rule => rule.stats.some(({ ref, keep }) =>
       m.stat.ref === ref && (!keep || ctx.item.rarity !== ItemRarity.Unique))))
 
@@ -432,4 +440,11 @@ function filterPseudoSources (
     }
   }
   return out
+}
+
+function isCorruptionImplicit (source: StatSource) {
+  return (
+    source.modifier.info.type === ModifierType.Implicit &&
+    source.modifier.info.mechanic === ModifierMechanic.Corruption
+  )
 }

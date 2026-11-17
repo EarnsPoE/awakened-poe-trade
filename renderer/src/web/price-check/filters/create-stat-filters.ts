@@ -262,6 +262,17 @@ export function calculatedStatToFilter (
     if (mechanic) {
       filter.tag = mechanic
     }
+
+    // let the UI switch the stat between implicit and explicit search
+    const altType = (type === ModifierType.Implicit)
+      ? ModifierType.Explicit
+      : ModifierType.Implicit
+    if (
+      stat.trade.ids[altType]?.length &&
+      (type === ModifierType.Implicit || item.rarity !== ItemRarity.Unique)
+    ) {
+      filter.altType = { tradeId: stat.trade.ids[altType], tag: altType }
+    }
   }
 
   if (roll && !filter.option) {
@@ -470,6 +481,9 @@ function finalFilterTweaks (ctx: FiltersCreationContext) {
         filter.hidden = 'hide_unique_base_implicit'
         filter.disabled = true
       }
+    } else if (filter.tag === FilterTag.Corruption) {
+      // corruption implicits drive the price, search them by default
+      filter.disabled = false
     } else if (
       filter.tag === FilterTag.Foulborn ||
       filter.tag === FilterTag.Vestigial ||
