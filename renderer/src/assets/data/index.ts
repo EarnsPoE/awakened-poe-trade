@@ -1,6 +1,14 @@
 import fnv1a from '@sindresorhus/fnv1a'
 import type { BaseType, DropEntry, Stat, StatOrGroup, StatMatcher, TranslationDict } from './interfaces'
 
+// The dev server sends public/ files without Cache-Control, so Chromium may
+// heuristically reuse a cached copy across overlay restarts and miss data
+// updates (e.g. a new stats-overrides.json). Always revalidate; an unchanged
+// file still comes back as a cheap 304.
+function fetchData (url: string) {
+  return fetch(url, { cache: 'no-cache' })
+}
+
 export * from './interfaces'
 
 export let ITEM_DROP: DropEntry[]
@@ -80,10 +88,10 @@ function itemNamesFromLines (items: Generator<BaseType>) {
 let ITEM_OVERRIDES: Record<string, BaseType[]> = {}
 
 async function loadItems (language: string) {
-  let ndjson = await (await fetch(`${import.meta.env.BASE_URL}data/${language}/items.ndjson`)).text()
+  let ndjson = await (await fetchData(`${import.meta.env.BASE_URL}data/${language}/items.ndjson`)).text()
   const INDEX_WIDTH = 2
-  const indexNames = new Uint32Array(await (await fetch(`${import.meta.env.BASE_URL}data/${language}/items-name.index.bin`)).arrayBuffer())
-  const indexRefNames = new Uint32Array(await (await fetch(`${import.meta.env.BASE_URL}data/${language}/items-ref.index.bin`)).arrayBuffer())
+  const indexNames = new Uint32Array(await (await fetchData(`${import.meta.env.BASE_URL}data/${language}/items-name.index.bin`)).arrayBuffer())
+  const indexRefNames = new Uint32Array(await (await fetchData(`${import.meta.env.BASE_URL}data/${language}/items-ref.index.bin`)).arrayBuffer())
 
   function commonFind (index: Uint32Array, prop: 'name' | 'refName') {
     return function (ns: BaseType['namespace'], name: string): BaseType[] | undefined {
@@ -227,10 +235,10 @@ function buildStatOverrides (language: string) {
 }
 
 async function loadStats (language: string) {
-  const ndjson = await (await fetch(`${import.meta.env.BASE_URL}data/${language}/stats.ndjson`)).text()
+  const ndjson = await (await fetchData(`${import.meta.env.BASE_URL}data/${language}/stats.ndjson`)).text()
   const INDEX_WIDTH = 2
-  const indexRef = new Uint32Array(await (await fetch(`${import.meta.env.BASE_URL}data/${language}/stats-ref.index.bin`)).arrayBuffer())
-  const indexMatcher = new Uint32Array(await (await fetch(`${import.meta.env.BASE_URL}data/${language}/stats-matcher.index.bin`)).arrayBuffer())
+  const indexRef = new Uint32Array(await (await fetchData(`${import.meta.env.BASE_URL}data/${language}/stats-ref.index.bin`)).arrayBuffer())
+  const indexMatcher = new Uint32Array(await (await fetchData(`${import.meta.env.BASE_URL}data/${language}/stats-matcher.index.bin`)).arrayBuffer())
 
   const overrides = buildStatOverrides(language)
 
@@ -328,10 +336,10 @@ export function stat (text: string) {
 
 export async function init (lang: string) {
   CLIENT_STRINGS_REF = (await import(/* @vite-ignore */`${import.meta.env.BASE_URL}data/en/client_strings.js`)).default
-  ITEM_DROP = await (await fetch(`${import.meta.env.BASE_URL}data/item-drop.json`)).json()
-  APP_PATRONS = await (await fetch(`${import.meta.env.BASE_URL}data/patrons.json`)).json()
-  STAT_OVERRIDES = await (await fetch(`${import.meta.env.BASE_URL}data/stats-overrides.json`)).json()
-  ITEM_OVERRIDES = await (await fetch(`${import.meta.env.BASE_URL}data/items-overrides.json`)).json()
+  ITEM_DROP = await (await fetchData(`${import.meta.env.BASE_URL}data/item-drop.json`)).json()
+  APP_PATRONS = await (await fetchData(`${import.meta.env.BASE_URL}data/patrons.json`)).json()
+  STAT_OVERRIDES = await (await fetchData(`${import.meta.env.BASE_URL}data/stats-overrides.json`)).json()
+  ITEM_OVERRIDES = await (await fetchData(`${import.meta.env.BASE_URL}data/items-overrides.json`)).json()
 
   await loadForLang(lang)
 
