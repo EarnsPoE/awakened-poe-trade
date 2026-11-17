@@ -137,6 +137,9 @@ export interface StatFilter {
   }
   hidden?: string
   disabled: boolean // NOTE: mutable in UI
+  // the same stat searched as the other mod type (implicit <-> explicit);
+  // the UI swaps it with `tradeId`/`tag`
+  altType?: { tradeId: string[], tag: FilterTag } // NOTE: mutable in UI
 }
 
 const _INTERNAL_TRADE_IDS = [
