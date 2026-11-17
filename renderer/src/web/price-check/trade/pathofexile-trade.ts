@@ -91,7 +91,7 @@ interface TradeRequest {
     name?: string | { discriminator: string, option: string }
     type?: string | { discriminator: string, option: string }
     stats: Array<{
-      type: 'and' | 'if' | 'count' | 'not' | 'mercenary'
+      type: 'and' | 'if' | 'count' | 'not' | 'weight' | 'mercenary'
       value?: FilterRange
       filters: Array<{
         id: string
@@ -99,6 +99,7 @@ interface TradeRequest {
           min?: number
           max?: number
           option?: number | string
+          weight?: number
         }
         disabled?: boolean
       }>
@@ -443,6 +444,27 @@ export function createTradeRequest (filters: ItemFilters, stats: FilterOrGroup[]
           { id: TARGET_ID.TOTAL_MODIFIERS, value: { min: 6, max: undefined }, disabled: stat.disabled }
         ]
       })
+    }
+
+    if (stat.tradeId[0] === 'item.open_prefixes' || stat.tradeId[0] === 'item.open_suffixes') {
+      const [empty, crafted] = (stat.tradeId[0] === 'item.open_prefixes')
+        ? ['# Empty Prefix Modifiers', '# Crafted Prefix Modifiers']
+        : ['# Empty Suffix Modifiers', '# Crafted Suffix Modifiers']
+      const input = stat.roll!
+      // weighted sum: empty + crafted (removable) slots
+      query.stats.push({
+        type: 'weight',
+        value: {
+          min: typeof input.min === 'number' ? input.min : undefined,
+          max: typeof input.max === 'number' ? input.max : undefined
+        },
+        disabled: stat.disabled,
+        filters: [
+          { id: pseudoStatByRef(empty)!.trade.ids[ModifierType.Pseudo][0], value: { weight: 1 } },
+          { id: pseudoStatByRef(crafted)!.trade.ids[ModifierType.Pseudo][0], value: { weight: 1 } }
+        ]
+      })
+      continue
     }
 
     if (stat.disabled) continue

@@ -155,6 +155,8 @@ const _INTERNAL_TRADE_IDS = [
   'item.crit',
   'item.aps',
   'item.has_empty_modifier',
+  'item.open_prefixes',
+  'item.open_suffixes',
   'item.mercenary_6link',
   'item.map_item_quantity',
   'item.map_atlas_drops',

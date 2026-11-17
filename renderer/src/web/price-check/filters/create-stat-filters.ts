@@ -1,13 +1,13 @@
 import { ParsedItem, ItemRarity, ItemCategory } from '@/parser'
 import { ModifierType, ModifierMechanic, StatCalculated, statSourcesTotal, translateStatWithRoll } from '@/parser/modifiers'
-import { JEWELLERY } from '@/parser/meta'
+import { JEWELLERY, ARMOUR, WEAPON } from '@/parser/meta'
 import { getPropQuality, QUALITY_CHANGING_ENCHANT } from '@/parser/calc-q20'
 import { percentRoll, percentRollDelta, roundRoll } from './util'
-import { FilterTag, ItemHasEmptyModifier, StatFilter, FilterGroup, FilterOrGroup } from './interfaces'
+import { FilterTag, StatFilter, FilterGroup, FilterOrGroup } from './interfaces'
 import { filterPseudo } from './pseudo'
 import { applyRules as applyAtzoatlRules } from './pseudo/atzoatl-rules'
 import { applyRules as applyMirroredTabletRules } from './pseudo/reflection-rules'
-import { filterEquipmentProps, filterBasePercentile, filterMemoryStrands, BASE_PCTL_AFFECTED_IDS } from './pseudo/item-property'
+import { filterEquipmentProps, filterBasePercentile, filterMemoryStrands, propToFilter, BASE_PCTL_AFFECTED_IDS } from './pseudo/item-property'
 import { mapProps, valdoBadMods, chartProps } from './pseudo/maps'
 import { applyFlaskHybridMod } from './pseudo/flasks'
 import { applyHeistRules } from './pseudo/heist'
@@ -445,21 +445,7 @@ function finalFilterTweaks (ctx: FiltersCreationContext) {
     applyFlaskHybridMod(ctx)
   }
 
-  const hasEmptyModifier = showHasEmptyModifier(ctx)
-  if (hasEmptyModifier !== false) {
-    ctx.filters.push({
-      tradeId: ['item.has_empty_modifier'],
-      text: '1 Empty or Crafted Modifier',
-      statRef: '1 Empty or Crafted Modifier',
-      disabled: true,
-      hidden: 'filters.hide_empty_mod',
-      tag: FilterTag.Pseudo,
-      sources: [],
-      option: {
-        value: hasEmptyModifier
-      }
-    })
-  }
+  filterOpenAffixes(ctx)
 
   if (item.category === ItemCategory.Amulet || item.category === ItemCategory.Ring) {
     applyAnointmentRules(ctx.filters, ctx.item)
@@ -557,17 +543,37 @@ function applyFlaskRules (filters: StatFilter[]) {
   }
 }
 
-// TODO
-// +1 Prefix Modifier allowed
-// -1 Suffix Modifier allowed
-function showHasEmptyModifier (ctx: FiltersCreationContext): ItemHasEmptyModifier | false {
+const OPEN_AFFIX_ITEMS_3 = new Set([
+  ...ARMOUR,
+  ...WEAPON,
+  ...JEWELLERY,
+  ItemCategory.Quiver
+])
+const OPEN_AFFIX_ITEMS_2 = new Set([
+  ItemCategory.Jewel,
+  ItemCategory.AbyssJewel
+])
+
+// Offer "N open prefixes/suffixes" on magic and rare items, per side,
+// only where that side has a free slot. A crafted mod counts as open,
+// because it can be removed at the crafting bench; the trade query
+// matches the same way (empty + crafted >= N).
+// TODO: "+1 Prefix Modifier allowed" / "-1 Suffix Modifier allowed"
+function filterOpenAffixes (ctx: FiltersCreationContext) {
   const { item } = ctx
 
   if (
-    item.rarity !== ItemRarity.Rare ||
+    (item.rarity !== ItemRarity.Magic && item.rarity !== ItemRarity.Rare) ||
+    item.isUnidentified ||
     item.isCorrupted ||
     item.isMirrored
-  ) return false
+  ) return
+
+  const isRare = (item.rarity === ItemRarity.Rare)
+  const maxPerSide = OPEN_AFFIX_ITEMS_3.has(item.category!)
+    ? (isRare ? 3 : 1)
+    : OPEN_AFFIX_ITEMS_2.has(item.category!) ? (isRare ? 2 : 1) : 0
+  if (!maxPerSide) return
 
   const randomMods = item.newMods.filter(mod =>
     mod.info.type === ModifierType.Explicit ||
@@ -575,28 +581,31 @@ function showHasEmptyModifier (ctx: FiltersCreationContext): ItemHasEmptyModifie
     mod.info.type === ModifierType.Veiled ||
     mod.info.type === ModifierType.Crafted)
 
-  const craftedMod = randomMods.find(mod => mod.info.type === ModifierType.Crafted)
-
+  // prefix/suffix is only known from the advanced (Ctrl+Alt+C) item text
   if (
-    (randomMods.length === 5 && !craftedMod) ||
-    (randomMods.length === 6 && craftedMod)
-  ) {
-    let prefixes = randomMods.filter(mod => mod.info.generation === 'prefix').length
-    let suffixes = randomMods.filter(mod => mod.info.generation === 'suffix').length
+    !randomMods.length ||
+    randomMods.some(mod => mod.info.generation === undefined)
+  ) return
 
-    if (craftedMod) {
-      if (craftedMod.info.generation === 'prefix') {
-        prefixes -= 1
-      } else {
-        suffixes -= 1
-      }
-    }
+  for (const generation of ['prefix', 'suffix'] as const) {
+    const taken = randomMods.filter(mod =>
+      mod.info.generation === generation &&
+      mod.info.type !== ModifierType.Crafted).length
+    const open = maxPerSide - taken
+    if (open <= 0) continue
 
-    if (prefixes === 2) return ItemHasEmptyModifier.Prefix
-    if (suffixes === 2) return ItemHasEmptyModifier.Suffix
+    const filter = propToFilter({
+      ref: (generation === 'prefix') ? 'Open Prefixes: #' : 'Open Suffixes: #',
+      tradeId: (generation === 'prefix') ? 'item.open_prefixes' : 'item.open_suffixes',
+      roll: { min: 0, max: maxPerSide, value: open },
+      sources: [],
+      disabled: true
+    }, ctx)
+    filter.tag = FilterTag.Pseudo
+    filter.roll!.min = open
+    filter.roll!.max = ''
+    ctx.filters.push(filter)
   }
-
-  return false
 }
 
 function enableAllFilters (filters: StatFilter[]) {
