@@ -5,8 +5,8 @@ Everything this fork changes compared with upstream
 
 - **Upstream base:** `3188208` "use x11 for dev mode too" (2026-09-25), the merge base of `master` and
   `origin/master`.
-- **Fork tip described here:** `master` at `bdce9ab` (2026-11-16).
-- **Size:** 21 commits plus 5 merges, 34 files, +2281 / -46 lines (`git diff --stat 3188208 master`).
+- **Fork tip described here:** `master` at `4655875` (2026-11-17).
+- **Size:** 32 commits plus 8 merges, 35 files, +2996 / -46 lines (`git diff --stat 3188208 master`).
 
 Upstream's generated game data (`renderer/public/data/<lang>/stats.ndjson` and `items.ndjson`) is never edited.
 Data fixes live in two fork-owned overrides files that are layered on top at runtime, so upstream data can be
@@ -31,11 +31,15 @@ commands at the end regenerate the raw inventory to check against.
 12. [Dev build: one-click clean start](#12-dev-build-one-click-clean-start)
 13. [Documentation](#13-documentation)
 14. [Maven's Invitations in the map check](#14-mavens-invitations-in-the-map-check)
-15. [Overrides data at a glance](#15-overrides-data-at-a-glance)
-16. [Not on master](#16-not-on-master)
-17. [Known stale text](#17-known-stale-text)
-18. [Every file changed](#18-every-file-changed)
-19. [Regenerating this inventory](#19-regenerating-this-inventory)
+15. ["within N metres" wording of nearby mods](#15-within-n-metres-wording-of-nearby-mods)
+16. [Chaplain of the Well mercenary build](#16-chaplain-of-the-well-mercenary-build)
+17. [Uniques missing from upstream](#17-uniques-missing-from-upstream)
+18. [Reworded rarity, crafting bench and Vigilant Strike mods](#18-reworded-rarity-crafting-bench-and-vigilant-strike-mods)
+19. [Overrides data at a glance](#19-overrides-data-at-a-glance)
+20. [Not on master](#20-not-on-master)
+21. [Known stale text](#21-known-stale-text)
+22. [Every file changed](#22-every-file-changed)
+23. [Regenerating this inventory](#23-regenerating-this-inventory)
 
 ---
 
@@ -279,37 +283,86 @@ its mods with the map-check profile, as for maps. No parser or UI change: `Widge
 `Invitation` category as map-like. Of the eight, only The Atlas is listed on trade (2026-11-17), so a price check
 of the others is not expected to work.
 
-## 15. Overrides data at a glance
+## 15. "within N metres" wording of nearby mods
 
-Counts on `master` at `bdce9ab`.
+**Commits:** `bdea4bd`, `239e480` · **Files:** `stats-overrides.json` (data only)
+
+The game replaced "nearby" with an explicit distance in about a hundred modifiers: "#% increased Attack Speed
+while a Rare or Unique Enemy is Nearby" (the "of the Order" suffix) now reads "... is within 6 metres", "Nearby
+Enemies are Blinded" reads "Enemies within 3.5 metres are Blinded", and so on. Upstream still has the old text, so
+these parsed as unknown modifiers. Trade kept every stat id and only retitled them.
+
+107 English aliases add the new wording to the existing stats. The new text comes from the live trade stat titles
+and was spot-checked against PoEDB mod lists. Each alias is derived from the upstream matchers by swapping in the
+reworded span, so negated ("reduced") and fixed-value variants carry over.
+
+**Not covered:** "Reflect Shocks applied to you to all Enemies within # metres" and "Taunts Enemies within # metres
+on use" (the distance itself is a placeholder on trade, so the game text is unknown), and non-English languages.
+
+## 16. Chaplain of the Well mercenary build
+
+**Commit:** `3469d6d` · **Files:** `items-overrides.json`, `stats-overrides.json` (data only)
+
+Price-checking a Mercenary Warrant with the new "Chaplain of the Well" build failed with "Unknown Mercenary
+Build". The build (namespace `MERCENARY_BUILD`) and four of its skills (Abyssal Spray, Abyssal Spray Detonation,
+Power of the Depths, Vaal Smite) are added. The skill split and the supports each skill can roll come from the
+build's PoEDB page; the trade ids come from the Mercenary group of the trade stats.
+
+**User-facing:** warrants with this build price-check like other builds, including both 6-Link groups.
+
+## 17. Uniques missing from upstream
+
+**Commits:** `1ce9af4`, `757694e` · **Files:** `items-overrides.json` (data only)
+
+Pasting a unique whose name upstream `items.ndjson` does not know fails the whole item with "unknown item". Added
+222 English unique entries on their existing bases: The Broken Elegy (Foul Staff) plus 221 name/base pairs that the
+trade item list has and upstream lacks (jewels, legacy and race uniques, league uniques, a few unique maps).
+Putrid Seed is skipped because its Mycelium Core base is missing too. Names upstream already knows on another
+base are left alone, because item overrides only apply to names upstream does not know.
+
+## 18. Reworded rarity, crafting bench and Vigilant Strike mods
+
+**Commit:** `7d42e52` · **Files:** `stats-overrides.json` (data only)
+
+Found by comparing every upstream stat with the live trade titles. Same change as section 2: the item rarity
+variants (during Effect, when on Low Life, from Slain Unique Enemies, Dropped by Frozen / Shocked / Magic Enemies,
+per Rampage Kills, the Glacial Hammer jewel, ...) now read "+#% to Item Rarity ..." or "+#% to Rarity of Items
+Dropped by ...". The crafting bench mods read "Prefix Modifiers cannot be changed" / "Suffix Modifiers cannot be
+changed", and the Vigilant Strike jewel line says "Allies within a 10 metre base radius". 15 aliases; trade ids
+unchanged.
+
+The same comparison flagged about 95 map and atlas mods ("your Maps" to "Area", Scarabs to Threads, Memory
+Threads to Memory Traces, Harvest to Sacred Fauna / Flora). They are not aliased until a map paste confirms the
+in-game text.
+
+## 19. Overrides data at a glance
+
+Counts on `master` at `4655875`.
 
 | `stats-overrides.json` | Entries | Alias | `addTradeIds` | `replaceTradeIds` | New stats |
 |---|---:|---:|---:|---:|---:|
-| `en` | 518 | 6 | 95 | 2 | 415 |
+| `en` | 644 | 128 | 95 | 2 | 419 |
 | `ru`, `ko`, `cmn-Hant` (each) | 97 | 0 | 95 | 2 | 0 |
 
-The 415 new English stats are 138 Viscera implicits and 277 `effect_` "Supported by" / "Grants" stats. The 6 aliases
-are the Item Rarity suffix and 5 Viscera wordings. 95 `addTradeIds` entries carry the 96 Viscera implicit ids.
+The 419 new English stats are 138 Viscera implicits, 277 `effect_` "Supported by" / "Grants" stats and 4 Chaplain of
+the Well skills. The 128 aliases are the Item Rarity suffix, 5 Viscera wordings, 107 "within N metres" wordings and
+15 rarity / crafting bench / Vigilant Strike wordings. 95 `addTradeIds` entries carry the 96 Viscera implicit ids.
 
 | `items-overrides.json` | Entries |
 |---|---:|
-| `en` | 182 (161 Viscera bases, 8 Maven's Invitations, 13 Thread items) |
+| `en` | 405 (161 Viscera bases, 8 Maven's Invitations, 13 Thread items, 222 uniques, 1 mercenary build) |
 | `ru`, `ko`, `cmn-Hant` (each) | 13 (Thread items) |
 
-## 16. Not on master
+## 20. Not on master
 
-- **"within N metres" wording of nearby mods:** branch `feature/rare-unique-within-metres` (2 commits) matches the
-  "within N metres" wording of nearby mods and of the Order suffix mods. Not merged yet; add a section here when it
-  lands.
+All feature and fix branches are fully merged into `master`.
 
-All other feature and fix branches are fully merged into `master`.
-
-## 17. Known stale text
+## 21. Known stale text
 
 None. `DEVELOPING.md` and the close prompt in `scripts/dev-clean-start.ps1` used to say the dev build never saves
 settings; both were corrected after section 10 landed.
 
-## 18. Every file changed
+## 22. Every file changed
 
 | File | +/- | Section |
 |---|---|---|
@@ -321,10 +374,10 @@ settings; both were corrected after section 10 landed.
 | `main/src/windowing/OverlayWindow.ts` | +27 | 9 |
 | `renderer/public/data/en/app_i18n.json` | +7 -1 | 3, 7 |
 | `renderer/public/data/en/client_strings.js` | +6 | 3 |
-| `renderer/public/data/items-overrides.json` | +231 (new) | 1, 3, 4, 14 |
+| `renderer/public/data/items-overrides.json` | +454 (new) | 1, 3, 4, 14, 16, 17 |
 | `renderer/public/data/ko/app_i18n.json` | +1 | 7 |
 | `renderer/public/data/ru/app_i18n.json` | +1 | 7 |
-| `renderer/public/data/stats-overrides.json` | +819 (new) | 1, 2, 3, 5 |
+| `renderer/public/data/stats-overrides.json` | +945 (new) | 1, 2, 3, 5, 15, 16, 18 |
 | `renderer/src/assets/data/index.ts` | +145 -6 | 1, 5 |
 | `renderer/src/assets/data/interfaces.ts` | +7 | 3 |
 | `renderer/src/assets/vite-plugin-make-indexes.ts` | +5 | 11 |
@@ -349,7 +402,7 @@ settings; both were corrected after section 10 landed.
 | `scripts/install-dev-shortcut.ps1` | +23 (new) | 12 |
 
 
-## 19. Regenerating this inventory
+## 23. Regenerating this inventory
 
 ```sh
 base=$(git merge-base master origin/master)   # origin = upstream SnosMe/awakened-poe-trade
