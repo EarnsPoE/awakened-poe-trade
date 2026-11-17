@@ -517,7 +517,11 @@
     {"ref": "Socketed Gems are Supported by Level # Void Manipulation Support", "better": 1, "matchers": [{"string": "Socketed Gems are Supported by Level # Void Manipulation Support"}], "trade": {"ids": {"explicit": ["explicit.effect_2742501709"]}}},
     {"ref": "Socketed Gems are Supported by Level # Volatility Support", "better": 1, "matchers": [{"string": "Socketed Gems are Supported by Level # Volatility Support"}], "trade": {"ids": {"explicit": ["explicit.effect_3498266457"]}}},
     {"ref": "Socketed Gems are Supported by Level # Volley Support", "better": 1, "matchers": [{"string": "Socketed Gems are Supported by Level # Volley Support"}], "trade": {"ids": {"explicit": ["explicit.effect_3022937704"]}}},
-    {"ref": "Socketed Gems are Supported by Level # Withering Touch Support", "better": 1, "matchers": [{"string": "Socketed Gems are Supported by Level # Withering Touch Support"}], "trade": {"ids": {"explicit": ["explicit.effect_602297583"]}}}
+    {"ref": "Socketed Gems are Supported by Level # Withering Touch Support", "better": 1, "matchers": [{"string": "Socketed Gems are Supported by Level # Withering Touch Support"}], "trade": {"ids": {"explicit": ["explicit.effect_602297583"]}}},
+    {"ref": "Abyssal Spray", "better": 0, "mercenary": {"supports": ["Physical as Extra Chaos", "Faster Casting", "Critical Chance", "Faster Projectiles", "Multiple Projectiles", "Return", "Wither on Hit", "Pierce"]}, "matchers": [{"string": "Abyssal Spray"}], "trade": {"ids": {"pseudo": ["mercenary.skill_50122"]}}},
+    {"ref": "Abyssal Spray Detonation", "better": 0, "mercenary": {"supports": ["Increased Area of Effect", "Physical as Extra Chaos", "Critical Chance", "Concentrated Effect", "Added Chaos"]}, "matchers": [{"string": "Abyssal Spray Detonation"}], "trade": {"ids": {"pseudo": ["mercenary.skill_41822"]}}},
+    {"ref": "Power of the Depths", "better": 0, "mercenary": {}, "matchers": [{"string": "Power of the Depths"}], "trade": {"ids": {"pseudo": ["mercenary.skill_54593"]}}},
+    {"ref": "Vaal Smite", "better": 0, "mercenary": {"supports": ["Increased Area of Effect", "Generosity", "Elemental Damage with Attacks", "Faster Attacks", "Gilded Extra Targets", "Cooldown Recovery"]}, "matchers": [{"string": "Vaal Smite"}], "trade": {"ids": {"pseudo": ["mercenary.skill_40606"]}}}
   ],
   "ru": [
     {"ref": "+# to maximum Fortification", "matchers": [], "addTradeIds": {"implicit": ["implicit.stat_335507772"]}},
