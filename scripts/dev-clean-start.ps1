@@ -244,10 +244,6 @@ function Confirm-Restart ($Apps) {
   Write-Host ''
   Write-Host 'These overlays are running and will be closed:' -ForegroundColor Yellow
   foreach ($a in $Apps) { Write-Host "    - $($a.Label) (PID $($a.Id))" -ForegroundColor Yellow }
-  if ($Apps | Where-Object { $_.Label -like 'dev*' }) {
-    Write-Host '    The dev build never writes settings to disk, so settings changed in it' -ForegroundColor Yellow
-    Write-Host '    since it started will be lost.' -ForegroundColor Yellow
-  }
   $answer = Read-Host 'Close them and restart? [y/N]'
   if ($answer -notmatch '^(y|yes)$') {
     Write-Host 'Cancelled; nothing was stopped.'

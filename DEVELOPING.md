@@ -164,9 +164,11 @@ switching branches or adding a file under `renderer/public`, restart `npm run de
 The generated `*.index.bin` files are the exception: they're written in the plugin's `config` hook, before Vite
 looks at `public/`.
 
-The dev build uses the same `%APPDATA%\awakened-poe-trade` folder as an installed Awakened PoE Trade. It reads the
-installed app's settings but never saves changes to them (`ConfigStore` skips writes in dev). Close the installed app
-first, since both would grab the same hotkeys.
+The dev build uses the same `%APPDATA%\awakened-poe-trade` folder as an installed Awakened PoE Trade, so both read
+and write the same `apt-data\config.json`. Unlike upstream, the fork's dev build saves settings: each change is written
+atomically, the previous good copy is kept as `config.json.bak`, and loading falls back to it if `config.json` is
+unreadable (`main/src/host-files/ConfigStore.ts`). Close the installed app first, since both would grab the same
+hotkeys.
 
 ## Granted skills and supports ("Supported by", "Grants Level")
 

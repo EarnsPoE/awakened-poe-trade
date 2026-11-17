@@ -292,10 +292,8 @@ All other local branches (`fork/*`, `feature/*`, `fix/*`) are fully merged into 
 
 ## 16. Known stale text
 
-Written before section 10 landed, and now wrong:
-
-- `DEVELOPING.md`, "Fork: running the dev build": says the dev build "never saves changes" to settings.
-- `scripts/dev-clean-start.ps1`: the close prompt warns that "the dev build never writes settings to disk".
+None. `DEVELOPING.md` and the close prompt in `scripts/dev-clean-start.ps1` used to say the dev build never saves
+settings; both were corrected after section 10 landed.
 
 ## 17. Every file changed
 
