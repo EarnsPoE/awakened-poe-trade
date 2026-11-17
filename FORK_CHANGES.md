@@ -30,11 +30,12 @@ commands at the end regenerate the raw inventory to check against.
 11. [Dev build: data index files generated before Vite starts](#11-dev-build-data-index-files-generated-before-vite-starts)
 12. [Dev build: one-click clean start](#12-dev-build-one-click-clean-start)
 13. [Documentation](#13-documentation)
-14. [Overrides data at a glance](#14-overrides-data-at-a-glance)
-15. [Not on master](#15-not-on-master)
-16. [Known stale text](#16-known-stale-text)
-17. [Every file changed](#17-every-file-changed)
-18. [Regenerating this inventory](#18-regenerating-this-inventory)
+14. [Maven's Invitations in the map check](#14-mavens-invitations-in-the-map-check)
+15. [Overrides data at a glance](#15-overrides-data-at-a-glance)
+16. [Not on master](#16-not-on-master)
+17. [Known stale text](#17-known-stale-text)
+18. [Every file changed](#18-every-file-changed)
+19. [Regenerating this inventory](#19-regenerating-this-inventory)
 
 ---
 
@@ -264,7 +265,21 @@ also generates them in its `config` hook. Developer-facing only.
   Threads, Supported by / Grants Level) and "Fork: running the dev build".
 - `FORK_CHANGES.md`: this file.
 
-## 14. Overrides data at a glance
+## 14. Maven's Invitations in the map check
+
+**Commit:** `c1795f9` · **Files:** `items-overrides.json` (data only)
+
+Maven's Invitations (Item Class "Misc Map Items") are missing from upstream `items.ndjson`, so they were "unknown
+item" and Ctrl+B on one did nothing. Added the eight current English bases with category `Invitation` (list from
+poedb's Misc Map Items page, 2026-11-17): The Formed, The Twisted, The Forgotten, The Hidden, The Feared, The
+Elderslayers, The Remembered and The Atlas.
+
+**User-facing:** Ctrl+B on a Maven's Invitation, including rare ones with map mods, opens the map check and rates
+its mods with the map-check profile, as for maps. No parser or UI change: `WidgetItemCheck` already treats the
+`Invitation` category as map-like. Of the eight, only The Atlas is listed on trade (2026-11-17), so a price check
+of the others is not expected to work.
+
+## 15. Overrides data at a glance
 
 Counts on `master` at `bdce9ab`.
 
@@ -278,10 +293,10 @@ are the Item Rarity suffix and 5 Viscera wordings. 95 `addTradeIds` entries carr
 
 | `items-overrides.json` | Entries |
 |---|---:|
-| `en` | 174 (161 Viscera bases, 13 Thread items) |
+| `en` | 182 (161 Viscera bases, 8 Maven's Invitations, 13 Thread items) |
 | `ru`, `ko`, `cmn-Hant` (each) | 13 (Thread items) |
 
-## 15. Not on master
+## 16. Not on master
 
 - **"within N metres" wording of nearby mods:** branch `feature/rare-unique-within-metres` (2 commits) matches the
   "within N metres" wording of nearby mods and of the Order suffix mods. Not merged yet; add a section here when it
@@ -289,12 +304,12 @@ are the Item Rarity suffix and 5 Viscera wordings. 95 `addTradeIds` entries carr
 
 All other feature and fix branches are fully merged into `master`.
 
-## 16. Known stale text
+## 17. Known stale text
 
 None. `DEVELOPING.md` and the close prompt in `scripts/dev-clean-start.ps1` used to say the dev build never saves
 settings; both were corrected after section 10 landed.
 
-## 17. Every file changed
+## 18. Every file changed
 
 | File | +/- | Section |
 |---|---|---|
@@ -306,7 +321,7 @@ settings; both were corrected after section 10 landed.
 | `main/src/windowing/OverlayWindow.ts` | +27 | 9 |
 | `renderer/public/data/en/app_i18n.json` | +7 -1 | 3, 7 |
 | `renderer/public/data/en/client_strings.js` | +6 | 3 |
-| `renderer/public/data/items-overrides.json` | +223 (new) | 1, 3, 4 |
+| `renderer/public/data/items-overrides.json` | +231 (new) | 1, 3, 4, 14 |
 | `renderer/public/data/ko/app_i18n.json` | +1 | 7 |
 | `renderer/public/data/ru/app_i18n.json` | +1 | 7 |
 | `renderer/public/data/stats-overrides.json` | +819 (new) | 1, 2, 3, 5 |
@@ -334,7 +349,7 @@ settings; both were corrected after section 10 landed.
 | `scripts/install-dev-shortcut.ps1` | +23 (new) | 12 |
 
 
-## 18. Regenerating this inventory
+## 19. Regenerating this inventory
 
 ```sh
 base=$(git merge-base master origin/master)   # origin = upstream SnosMe/awakened-poe-trade
