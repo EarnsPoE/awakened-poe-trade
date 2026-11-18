@@ -3,7 +3,7 @@ import { ModifierType, ModifierMechanic, StatCalculated, statSourcesTotal, trans
 import { JEWELLERY, ARMOUR, WEAPON } from '@/parser/meta'
 import { getPropQuality, QUALITY_CHANGING_ENCHANT } from '@/parser/calc-q20'
 import { percentRoll, percentRollDelta, roundRoll } from './util'
-import { FilterTag, StatFilter, FilterGroup, FilterOrGroup } from './interfaces'
+import { FilterTag, StatFilter, FilterGroup, FilterOrGroup, OpenAffixMode } from './interfaces'
 import { filterPseudo } from './pseudo'
 import { applyRules as applyAtzoatlRules } from './pseudo/atzoatl-rules'
 import { applyRules as applyMirroredTabletRules } from './pseudo/reflection-rules'
@@ -555,9 +555,9 @@ const OPEN_AFFIX_ITEMS_2 = new Set([
 ])
 
 // Offer "N open prefixes/suffixes" on magic and rare items, per side,
-// only where that side has a free slot. A crafted mod counts as open,
-// because it can be removed at the crafting bench; the trade query
-// matches the same way (empty + crafted >= N).
+// only where that side has a free slot. By default a crafted mod counts
+// as open, because it can be removed at the crafting bench (trade query:
+// empty + crafted >= N); chips narrow it to empty-only or crafted-only.
 // TODO: "+1 Prefix Modifier allowed" / "-1 Suffix Modifier allowed"
 function filterOpenAffixes (ctx: FiltersCreationContext) {
   const { item } = ctx
@@ -588,10 +588,10 @@ function filterOpenAffixes (ctx: FiltersCreationContext) {
   ) return
 
   for (const generation of ['prefix', 'suffix'] as const) {
-    const taken = randomMods.filter(mod =>
-      mod.info.generation === generation &&
-      mod.info.type !== ModifierType.Crafted).length
-    const open = maxPerSide - taken
+    const side = randomMods.filter(mod => mod.info.generation === generation)
+    const crafted = side.filter(mod => mod.info.type === ModifierType.Crafted).length
+    const empty = Math.max(maxPerSide - side.length, 0)
+    const open = empty + crafted
     if (open <= 0) continue
 
     const filter = propToFilter({
@@ -604,6 +604,12 @@ function filterOpenAffixes (ctx: FiltersCreationContext) {
     filter.tag = FilterTag.Pseudo
     filter.roll!.min = open
     filter.roll!.max = ''
+    filter.option = { value: OpenAffixMode.EmptyOrCrafted }
+    filter.openAffixCounts = {
+      [OpenAffixMode.EmptyOrCrafted]: open,
+      [OpenAffixMode.Empty]: empty,
+      [OpenAffixMode.Crafted]: crafted
+    }
     ctx.filters.push(filter)
   }
 }

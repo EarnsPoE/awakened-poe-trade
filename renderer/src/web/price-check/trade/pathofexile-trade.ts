@@ -1,5 +1,5 @@
 import { ItemInfluence, ItemCategory } from '@/parser'
-import { ItemFilters, StatFilter, FilterOrGroup, INTERNAL_TRADE_IDS, InternalTradeId, FilterTag } from '../filters/interfaces'
+import { ItemFilters, StatFilter, FilterOrGroup, INTERNAL_TRADE_IDS, InternalTradeId, FilterTag, OpenAffixMode } from '../filters/interfaces'
 import { setProperty as propSet } from 'dot-prop'
 import { DateTime } from 'luxon'
 import { Host } from '@/web/background/IPC'
@@ -451,7 +451,12 @@ export function createTradeRequest (filters: ItemFilters, stats: FilterOrGroup[]
         ? ['# Empty Prefix Modifiers', '# Crafted Prefix Modifiers']
         : ['# Empty Suffix Modifiers', '# Crafted Suffix Modifiers']
       const input = stat.roll!
-      // weighted sum: empty + crafted (removable) slots
+      const mode = stat.option?.value ?? OpenAffixMode.EmptyOrCrafted
+      const refs = [
+        ...(mode !== OpenAffixMode.Crafted ? [empty] : []),
+        ...(mode !== OpenAffixMode.Empty ? [crafted] : [])
+      ]
+      // weighted sum of the selected counts: empty and/or crafted (removable) slots
       query.stats.push({
         type: 'weight',
         value: {
@@ -459,10 +464,10 @@ export function createTradeRequest (filters: ItemFilters, stats: FilterOrGroup[]
           max: typeof input.max === 'number' ? input.max : undefined
         },
         disabled: stat.disabled,
-        filters: [
-          { id: pseudoStatByRef(empty)!.trade.ids[ModifierType.Pseudo][0], value: { weight: 1 } },
-          { id: pseudoStatByRef(crafted)!.trade.ids[ModifierType.Pseudo][0], value: { weight: 1 } }
-        ]
+        filters: refs.map(ref => ({
+          id: pseudoStatByRef(ref)!.trade.ids[ModifierType.Pseudo][0],
+          value: { weight: 1 }
+        }))
       })
       continue
     }
