@@ -140,6 +140,8 @@ export interface StatFilter {
   option?: {
     value: number // NOTE: mutable in UI
   }
+  // open prefix/suffix filter: the item's own slot count for each OpenAffixMode
+  openAffixCounts?: Record<OpenAffixMode, number>
   hidden?: string
   disabled: boolean // NOTE: mutable in UI
   // the same stat searched as the other mod type (implicit <-> explicit);
@@ -187,6 +189,12 @@ const _INTERNAL_TRADE_IDS = [
 
 export type InternalTradeId = typeof _INTERNAL_TRADE_IDS[number]
 export const INTERNAL_TRADE_IDS = _INTERNAL_TRADE_IDS as readonly string[]
+
+export enum OpenAffixMode {
+  EmptyOrCrafted = 0,
+  Empty = 1,
+  Crafted = 2
+}
 
 export enum ItemHasEmptyModifier {
   Any = 0,

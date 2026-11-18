@@ -108,7 +108,7 @@ import FilterModifierTiers from './FilterModifierTiers.vue'
 import { AppConfig } from '@/web/Config'
 import { ItemCategory, ItemRarity, ParsedItem } from '@/parser'
 import { getTradeMaxQuality } from '@/parser/calc-q20.js'
-import { FilterTag, StatFilter, INTERNAL_TRADE_IDS, ItemHasEmptyModifier } from './interfaces'
+import { FilterTag, StatFilter, INTERNAL_TRADE_IDS, ItemHasEmptyModifier, OpenAffixMode } from './interfaces'
 import SourceInfo from './SourceInfo.vue'
 import { SearchMode as MercSearchMode } from './pseudo/mercenary.js'
 
@@ -137,6 +137,16 @@ export default defineComponent({
   },
   setup (props, ctx) {
     const $style = useCssModule()
+
+    // open prefix/suffix: a chip switches what counts as open; search
+    // from the item's own count for that mode (at least 1)
+    watch(() => props.filter.option?.value, (mode) => {
+      const counts = props.filter.openAffixCounts
+      if (!counts || mode == null || !props.filter.roll) return
+      const count = counts[mode as OpenAffixMode]
+      props.filter.roll.value = count
+      props.filter.roll.min = Math.max(count, 1)
+    })
 
     watch(() => props.filter.disabled && props.groupExpanded, (uncheckedHint) => {
       if (!uncheckedHint) return
@@ -296,6 +306,12 @@ export default defineComponent({
             { text: t('filters.option_empty_affix'), value: ItemHasEmptyModifier.Any },
             { text: t('filters.option_empty_prefix'), value: ItemHasEmptyModifier.Prefix },
             { text: t('filters.option_empty_suffix'), value: ItemHasEmptyModifier.Suffix }
+          ]
+        } else if (props.filter.openAffixCounts) {
+          return [
+            { text: t('filters.option_open_any'), value: OpenAffixMode.EmptyOrCrafted },
+            { text: t('filters.option_open_empty'), value: OpenAffixMode.Empty },
+            { text: t('filters.option_open_crafted'), value: OpenAffixMode.Crafted }
           ]
         }
       }),
