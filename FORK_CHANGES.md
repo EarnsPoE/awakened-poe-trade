@@ -483,6 +483,23 @@ metres ... reduced Item Rarity" wording.
 
 All feature and fix branches are fully merged into `master`.
 
+Upstream-ready branches: one feature each, a single commit on `upstream/master` at `803d188` with no overrides,
+Viscera or fork docs, so each can be offered to upstream as a pull request on its own. Each passes `vue-tsc` and
+eslint alone; the two filter features were also checked headless on their own.
+
+| Branch | Section | Commit |
+|---|---|---|
+| `pr/mercenary-6link-crash` | 8 | `0ca7fdd` |
+| `pr/magic-rarity-chip` | 6 | `2f70d0a` |
+| `pr/poedb-modifiers-hotkey` | 7 | `06bb371` |
+| `pr/open-affix-filters` | 19 | `5693d20` |
+| `pr/corruption-implicit-filters` | 21 | `eb5c999` |
+| `pr/dev-index-files` | 11 | `9d6a1d7` |
+
+Differences from the fork commits: `pr/open-affix-filters` resolves the same import-line conflict as the 3.30 sync;
+`pr/poedb-modifiers-hotkey` drops a fork-only code comment; `pr/dev-index-files` leaves out the fork's `DEVELOPING.md`
+section. No pull request has been opened upstream.
+
 ## 26. Known stale text
 
 None. `DEVELOPING.md` and the close prompt in `scripts/dev-clean-start.ps1` used to say the dev build never saves
