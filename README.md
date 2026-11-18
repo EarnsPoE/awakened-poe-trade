@@ -2,16 +2,24 @@
 
 ## About this fork
 
-This is a fork of [SnosMe/awakened-poe-trade](https://github.com/SnosMe/awakened-poe-trade) that aims to recognize
-new mods and items sooner after a game patch than upstream data updates do.
+A fork of [SnosMe/awakened-poe-trade](https://github.com/SnosMe/awakened-poe-trade) that supports new items and mods
+sooner after a patch, adds open-affix and corruption-implicit price-check filters, a PoEDB modifiers hotkey and a few
+crash fixes. See [FORK_CHANGES.md](./FORK_CHANGES.md) for the list.
 
-It differs from upstream in one way: upstream's generated game data (`renderer/public/data/<lang>/stats.ndjson`
-and `items.ndjson`) is left untouched, and the fork's fixes live in separate, hand-maintained overrides files
-(`renderer/public/data/stats-overrides.json` and `items-overrides.json`) that are layered on top at runtime.
-Upstream data can therefore be re-synced as-is. See [DEVELOPING.md](./DEVELOPING.md#fork-data-overrides) for the
-file formats.
+### Install and run (Windows)
 
-For the full list of what the fork adds or fixes, see [FORK_CHANGES.md](./FORK_CHANGES.md).
+There is no installer for the fork; it runs from source. Install [Node.js](https://nodejs.org/) (LTS) and
+[Git](https://git-scm.com/download/win), then in PowerShell:
+
+```powershell
+git clone https://github.com/EarnsPoE/awakened-poe-trade.git
+cd awakened-poe-trade
+powershell -ExecutionPolicy Bypass -File scripts\install-dev-shortcut.ps1
+```
+
+Start it with the **APT Dev (clean start)** shortcut on your desktop and keep the two console windows it opens.
+It closes the installed Awakened PoE Trade first and uses the same settings. To update: `git pull`, then start it
+again. Step-by-step guide and troubleshooting: [HOW_TO_INSTALL.md](./HOW_TO_INSTALL.md).
 
 All credit for the app goes to Alexander Drozdov and the upstream contributors. Like upstream, the fork is
 distributed under the [MIT License](./LICENSE). For the official release, issues and support, use upstream.
@@ -21,7 +29,7 @@ distributed under the [MIT License](./LICENSE). For the official release, issues
 [![](https://user-images.githubusercontent.com/4292308/153364565-7a545d26-e617-4a33-a919-ff90d8feda3d.svg)](https://github.com/SnosMe/awakened-poe-trade/issues/22)
 
 
-➡ [Download for Windows & Linux](https://snosme.github.io/awakened-poe-trade/download) ⬅
+➡ [Download upstream for Windows & Linux](https://snosme.github.io/awakened-poe-trade/download) (the official release, without the fork's changes) ⬅
 
 ## Tool showcase
 
