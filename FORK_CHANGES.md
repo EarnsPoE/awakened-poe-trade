@@ -372,20 +372,21 @@ new map wording (for example "#% increased Threads found in your Maps"); not re-
 
 ## 19. Open prefix/suffix filters in the price check
 
-**Commit:** `abf4d50` · **Files:** `create-stat-filters.ts`, `interfaces.ts`, `pathofexile-trade.ts`,
-`en/app_i18n.json`
+**Commits:** `abf4d50`, `8237311` · **Files:** `create-stat-filters.ts`, `interfaces.ts`, `FilterModifier.vue`,
+`pathofexile-trade.ts`, `en/app_i18n.json`
 
-Magic and rare weapons, armour, jewellery, quivers, jewels and abyss jewels get "Open Prefixes (empty or crafted):
-N" and/or "Open Suffixes (empty or crafted): N", off by default, only for a side that has a free slot (magic 1 per
-side; rare 3, or 2 on jewels). A
-master-crafted mod counts as open, since it can be removed at the bench. The query is a weighted group per side,
-`pseudo_number_of_empty_<side>_mods` + `pseudo_number_of_crafted_<side>_mods` >= N, so listings with a crafted mod
-in the slot match too. Shown only for identified, uncorrupted, unmirrored rares copied with Ctrl+Alt+C (the text
-that says prefix or suffix).
+Magic and rare weapons, armour, jewellery, quivers, jewels and abyss jewels get "Open Prefixes: N" and/or "Open
+Suffixes: N", off by default, only for a side that has a free slot (magic 1 per side; rare 3, or 2 on jewels). Each
+row has three chips: "Empty or crafted" (default; a master-crafted mod counts as open, since it can be removed at the
+bench), "Empty" and "Crafted". The query is a weighted group per side over the selected counts,
+`pseudo_number_of_empty_<side>_mods` and/or `pseudo_number_of_crafted_<side>_mods`, >= N. Switching chips sets N to
+the item's own count for that mode (at least 1). Shown only for identified, uncorrupted, unmirrored items copied with
+Ctrl+Alt+C (the text that says prefix or suffix).
 
 **User-facing:** e.g. boots with 2 prefixes, 2 suffixes and a crafted suffix offer "Open Prefixes: 1" and "Open
-Suffixes: 1"; a magic item with only a prefix offers "Open Suffixes: 1". Replaces upstream's hidden "1 Empty or Crafted Modifier" filter, which only appeared on items with
-exactly 5 mods (or 6 with a craft).
+Suffixes: 1"; on the suffix row, "Empty" searches for a truly empty suffix and "Crafted" for a crafted one. A magic
+item with only a prefix offers "Open Suffixes: 1". Replaces upstream's hidden "1 Empty or Crafted Modifier" filter,
+which only appeared on items with exactly 5 mods (or 6 with a craft).
 
 ## 20. Data files always revalidated
 
@@ -483,7 +484,7 @@ metres ... reduced Item Rarity" wording.
 
 All feature and fix branches are fully merged into `master`.
 
-Upstream-ready branches: one feature each, a single commit on `upstream/master` at `803d188` with no overrides,
+Upstream-ready branches: one feature each (`pr/open-affix-filters` has a second commit for its chips) on `upstream/master` at `803d188` with no overrides,
 Viscera or fork docs, so each can be offered to upstream as a pull request on its own. Each passes `vue-tsc` and
 eslint alone; the two filter features were also checked headless on their own.
 
@@ -492,7 +493,7 @@ eslint alone; the two filter features were also checked headless on their own.
 | `pr/mercenary-6link-crash` | 8 | `0ca7fdd` |
 | `pr/magic-rarity-chip` | 6 | `2f70d0a` |
 | `pr/poedb-modifiers-hotkey` | 7 | `06bb371` |
-| `pr/open-affix-filters` | 19 | `5693d20` |
+| `pr/open-affix-filters` | 19 | `5693d20`, `4bd1d9b` (chips) |
 | `pr/corruption-implicit-filters` | 21 | `eb5c999` |
 | `pr/dev-index-files` | 11 | `9d6a1d7` |
 
@@ -516,7 +517,7 @@ settings; both were corrected after section 10 landed.
 | `main/src/host-files/ConfigStore.ts` | +59 -8 | 10 |
 | `main/src/main.ts` | +6 | 9 |
 | `main/src/windowing/OverlayWindow.ts` | +27 | 9 |
-| `renderer/public/data/en/app_i18n.json` | +10 -1 | 3, 7, 19, 21 |
+| `renderer/public/data/en/app_i18n.json` | +13 -1 | 3, 7, 19, 21 |
 | `renderer/public/data/en/client_strings.js` | +6 | 3 |
 | `renderer/public/data/items-overrides.json` | +384 (new) | 1, 3, 4, 14, 17, 23 |
 | `renderer/public/data/ko/app_i18n.json` | +1 | 7 |
@@ -539,12 +540,12 @@ settings; both were corrected after section 10 landed.
 | `renderer/src/web/price-check/filters/FilterName.vue` | +1 -1 | 3 |
 | `renderer/src/web/price-check/filters/create-item-filters.ts` | +5 -1 | 3, 6 |
 | `renderer/src/web/price-check/filters/create-presets.ts` | +2 -1 | 3 |
-| `renderer/src/web/price-check/filters/FilterModifier.vue` | +34 -3 | 21 |
-| `renderer/src/web/price-check/filters/create-stat-filters.ts` | +66 -43 | 19, 21, 23 |
-| `renderer/src/web/price-check/filters/interfaces.ts` | +10 | 3, 8, 19, 21 |
+| `renderer/src/web/price-check/filters/FilterModifier.vue` | +51 -4 | 19, 21 |
+| `renderer/src/web/price-check/filters/create-stat-filters.ts` | +71 -42 | 19, 21, 23 |
+| `renderer/src/web/price-check/filters/interfaces.ts` | +18 | 3, 8, 19, 21 |
 | `renderer/src/web/price-check/filters/pseudo/index.ts` | +16 -1 | 21 |
 | `renderer/src/web/price-check/filters/pseudo/mercenary.ts` | +6 -18 | 8 |
-| `renderer/src/web/price-check/trade/pathofexile-trade.ts` | +28 -6 | 3, 8, 19 |
+| `renderer/src/web/price-check/trade/pathofexile-trade.ts` | +34 -7 | 3, 8, 19 |
 | `scripts/dev-clean-start.ps1` | +484 (new) | 12 |
 | `scripts/install-dev-shortcut.ps1` | +23 (new) | 12 |
 
