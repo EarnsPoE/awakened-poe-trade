@@ -469,6 +469,15 @@ export function createTradeRequest (filters: ItemFilters, stats: FilterOrGroup[]
           value: { weight: 1 }
         }))
       })
+      if (mode === OpenAffixMode.Empty) {
+        // the empty count already excludes crafted slots, but the user wants
+        // listings whose stats hold up without a bench craft on this side
+        query.stats.push({
+          type: 'not',
+          disabled: stat.disabled,
+          filters: [{ id: pseudoStatByRef(crafted)!.trade.ids[ModifierType.Pseudo][0] }]
+        })
+      }
       continue
     }
 
