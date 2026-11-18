@@ -3,15 +3,16 @@
 Everything this fork changes compared with upstream
 [SnosMe/awakened-poe-trade](https://github.com/SnosMe/awakened-poe-trade), grouped by feature.
 
-- **Upstream base:** `3188208` "use x11 for dev mode too" (2026-09-25), the merge base of `master` and
-  `upstream/master`.
-- **Fork tip described here:** `master` at `7e1c024` (2026-11-17), plus the documentation commit that updates this
-  file.
-- **Size at `7e1c024`:** 41 commits plus 12 merges, 38 files, +3285 / -101 lines (`git diff --stat 3188208 master`).
+- **Upstream base:** `803d188` "add support for rare-only mods and 9-mod maps" (upstream's 3.30 data, merged
+  2026-11-17), the merge base of `master` and `upstream/master`. Before that sync the base was `3188208`.
+- **Fork tip described here:** the 3.30 sync (section 23) on top of `master` at `2dc598e`, plus the documentation
+  commit that updates this file.
+- **Size after the sync:** 46 commits plus 13 merges, 38 files, +2480 / -101 lines (`git diff --stat upstream/master`).
 
 Upstream's generated game data (`renderer/public/data/<lang>/stats.ndjson` and `items.ndjson`) is never edited.
 Data fixes live in two fork-owned overrides files that are layered on top at runtime, so upstream data can be
-re-synced as-is. When upstream ships an equivalent fix, the matching override goes dead and can be deleted.
+re-synced as-is. When upstream ships an equivalent fix, the matching override goes dead and can be deleted (see
+section 23 and `DEVELOPING.md`, "After syncing upstream data").
 
 Keep this file up to date: add an entry in the same commit, or merge, that lands a change on `master`. The
 commands at the end regenerate the raw inventory to check against.
@@ -40,11 +41,12 @@ commands at the end regenerate the raw inventory to check against.
 20. [Data files always revalidated](#20-data-files-always-revalidated)
 21. [Corruption implicits searched as implicits](#21-corruption-implicits-searched-as-implicits)
 22. [Zero-width characters stripped from copied item text](#22-zero-width-characters-stripped-from-copied-item-text)
-23. [Overrides data at a glance](#23-overrides-data-at-a-glance)
-24. [Not on master](#24-not-on-master)
-25. [Known stale text](#25-known-stale-text)
-26. [Every file changed](#26-every-file-changed)
-27. [Regenerating this inventory](#27-regenerating-this-inventory)
+23. [Upstream 3.30 sync](#23-upstream-330-sync)
+24. [Overrides data at a glance](#24-overrides-data-at-a-glance)
+25. [Not on master](#25-not-on-master)
+26. [Known stale text](#26-known-stale-text)
+27. [Every file changed](#27-every-file-changed)
+28. [Regenerating this inventory](#28-regenerating-this-inventory)
 
 ---
 
@@ -63,7 +65,9 @@ No user-facing behaviour on its own; it is what the data fixes below are built o
   a miss, and returned as clones so callers can't mutate shared override data.
 - Four entry kinds:
   - **Alias matcher** `{ ref, matchers }`: adds matchers for new wording to an upstream stat (trade id unchanged).
-  - **New stat**: a full `stats.ndjson`-shaped object with `trade.ids` and a `ref` that doesn't exist upstream.
+  - **New stat**: a full `stats.ndjson`-shaped object with `trade.ids` and a `ref` that doesn't exist upstream. If
+    upstream later ships the same `ref`, upstream's copy wins and the entry's matchers are added to it as aliases
+    (since the 3.30 sync, commit `6626dc5`), so fork-only wordings keep working.
   - **`addTradeIds`** `{ ref, matchers: [], addTradeIds: { <type>: [ids] } }`: merges extra trade ids into an
     upstream stat (e.g. an existing stat that can now roll as an implicit on a new class). When a ref is ambiguous
     (local and global variants share it), the id goes only to the stat that already uses the same stat hash.
@@ -87,6 +91,8 @@ The game now prints the "of Raiding"-family suffix as `+X% to Item Rarity` inste
 alias matcher on the existing stat fixes it; the trade id (`explicit.stat_3917489142`) is unchanged.
 
 **User-facing:** gloves, boots, rings and so on with this suffix get the rarity mod back as a price-check filter.
+
+**Since the 3.30 sync:** upstream has this wording; the alias was removed.
 
 ## 3. Viscera item class
 
@@ -119,6 +125,9 @@ Viscera (Wickerman body parts) used to price check as "Unknown Item".
 
 **User-facing:** English clients can price check Viscera by base, with slot-specific category search and implicit
 filters.
+**Since the 3.30 sync:** upstream has 89 of the 138 new implicit stats, and every id of 81 of the 95 `addTradeIds`
+entries, so those were removed; 49 new stats and 14 `addTradeIds` entries (in each language) remain. Upstream has
+no Viscera bases, so the bases, parser and trade changes are unchanged.
 **Known gaps** (detailed in `DEVELOPING.md`): no icons, English client only (`VISCERA_*` strings are optional in
 `TranslationDict`), no tier filter, a few implicit lines trade has no stat for, three bases poedb lists but trade
 doesn't.
@@ -138,6 +147,9 @@ exchange `tradeTag`, `exchangeable: true` and icons from each trade site's `/api
 **User-facing:** price checking any of them opens bulk exchange with the copied stack size as the stock filter, in
 all four client languages. No parser change.
 
+**Since the 3.30 sync:** upstream ships all of these except Frayed Thread, with the same bulk tags, and adds
+poe.ninja prices for Threads. Only the Frayed Thread entries remain (one per language).
+
 ## 5. "Supported by" and "Grants Level" mods on new trade ids
 
 **Commits:** `c429c36` (`replaceTradeIds` kind), `0c2cc61` (data) · merged in `8a0c48e`
@@ -155,6 +167,9 @@ granted skills drop " Skill". Upstream recognises neither, including corrupted i
 
 **User-facing:** e.g. a corrupted "Supported by Level 10 Increased Area of Effect Support" implicit is now a
 searchable filter (`implicit.effect_3737592146`), and searches no longer fail on dropped ids.
+
+**Since the 3.30 sync:** upstream ships all 278 stats with the same ids, in every language, and both
+`replaceTradeIds` fixes. All of these overrides were removed; see section 23 for the zero-width space.
 
 ## 6. Magic rarity chip in the default price-check preset
 
@@ -305,6 +320,12 @@ reworded span, so negated ("reduced") and fixed-value variants carry over.
 **Not covered:** "Reflect Shocks applied to you to all Enemies within # metres" and "Taunts Enemies within # metres
 on use" (the distance itself is a placeholder on trade, so the game text is unknown), and non-English languages.
 
+**Since the 3.30 sync:** upstream has the new wording, in every language, and the aliases were removed. The
+"Allies within 3 metres have #% reduced Item Rarity" alias stays, pointed at upstream's renamed stat, because
+upstream's own "reduced" matcher lacks the word "have". Upstream also splits "Enemies within 3 metres are Chilled"
+and "... within 6 metres ..." into two stats with their own trade ids; the fork had mapped both to "Nearby Enemies
+are Chilled".
+
 ## 16. Chaplain of the Well mercenary build
 
 **Commit:** `3469d6d` · **Files:** `items-overrides.json`, `stats-overrides.json` (data only)
@@ -316,6 +337,8 @@ build's PoEDB page; the trade ids come from the Mercenary group of the trade sta
 
 **User-facing:** warrants with this build price-check like other builds, including both 6-Link groups.
 
+**Since the 3.30 sync:** upstream has the build and its skills; the overrides were removed.
+
 ## 17. Uniques missing from upstream
 
 **Commits:** `9d3d52f`, `139871a` · **Files:** `items-overrides.json` (data only)
@@ -325,6 +348,9 @@ Pasting a unique whose name upstream `items.ndjson` does not know fails the whol
 trade item list has and upstream lacks (jewels, legacy and race uniques, league uniques, a few unique maps).
 Putrid Seed is skipped because its Mycelium Core base is missing too. Names upstream already knows on another
 base are left alone, because item overrides only apply to names upstream does not know.
+
+**Since the 3.30 sync:** upstream has 21 of them on the same bases (including The Broken Elegy); those were removed
+and 201 remain.
 
 ## 18. Reworded rarity, crafting bench and Vigilant Strike mods
 
@@ -340,6 +366,9 @@ unchanged.
 The same comparison flagged about 95 map and atlas mods ("your Maps" to "Area", Scarabs to Threads, Memory
 Threads to Memory Traces, Harvest to Sacred Fauna / Flora). They are not aliased until a map paste confirms the
 in-game text.
+
+**Since the 3.30 sync:** upstream has these wordings and the 15 aliases were removed. Upstream's data also carries
+new map wording (for example "#% increased Threads found in your Maps"); not re-checked against the 95 flagged mods.
 
 ## 19. Open prefix/suffix filters in the price check
 
@@ -404,39 +433,67 @@ U+200B-U+200D, U+2060 and U+FEFF before anything else.
 **User-facing:** e.g. Hegemony's Era's "Socketed Gems are Supported by Level 10 Increased Area of Effect Support"
 corruption implicit and a Shaper sceptre's "Faster Attacks Support" hybrid suffix are recognized and searchable.
 
-## 23. Overrides data at a glance
+**Reverted in the 3.30 sync** (commit `d46efcd`): upstream now keeps the U+200B inside its matchers, so stripping it
+made these lines unrecognized again. See section 23.
 
-Counts on `master` at `7e1c024`.
+## 23. Upstream 3.30 sync
+
+**Commits:** `8bc6432` (merge of `upstream/master` at `803d188`), `d46efcd`, `6626dc5`, `b209ebf`
+
+Upstream brought five commits: stat ranges described in words ("(...)") are ignored when matching; the 3.30 game
+data refresh in all four languages, plus poe.ninja prices for Threads; a map "Atlas Drops" filter and "More Scarabs"
+renamed "More Threads"; "Rare-only" mods (tag and icon) and 9-mod maps; and a docs version bump.
+
+- **Text conflict:** only the import lines of `create-stat-filters.ts`; both sides kept (`ModifierMechanic` from
+  upstream, `ARMOUR, WEAPON` from section 19).
+- **Zero-width space:** upstream's data keeps the game's U+200B in about 800 "Grants" / "Supported by" matchers per
+  language. With section 22's stripping, every such line became unrecognized after the merge, so the stripping was
+  removed (`d46efcd`). Item text pasted from elsewhere has usually lost the U+200B, so those lines don't parse from
+  a paste; the live clipboard does.
+- **Shadowed fork stats:** a fork-added stat whose `ref` upstream now ships was ignored, together with its fork-only
+  matchers (e.g. "#% increased Enemy Chance to Block Sword Attacks"). Such matchers now act as aliases (`6626dc5`).
+- **Dead overrides removed** (`b209ebf`), where upstream has the same text and trade ids: in `en`, 127 aliases, 370
+  new stats (278 of them the `effect_` stats of section 5), 81 `addTradeIds` entries and both `replaceTradeIds`
+  entries; in `ru`, `ko` and `cmn-Hant`, 81 `addTradeIds` and both `replaceTradeIds` each; 34 English items
+  (12 Thread items, Chaplain of the Well, 21 uniques) and 12 Thread items per other language.
+- Checked with `vue-tsc` and a headless parse in every language, plus English price-check presets (corruption
+  implicit "Supported by" filter, "Grants Level", Viscera, Frayed Thread, a remaining unique, Maven's Invitation).
+
+**User-facing:** the upstream features above, and "Supported by" / "Grants Level" mods are now recognized in all four
+client languages instead of English only.
+
+## 24. Overrides data at a glance
+
+Counts after the 3.30 sync (section 23).
 
 | `stats-overrides.json` | Entries | Alias | `addTradeIds` | `replaceTradeIds` | New stats |
 |---|---:|---:|---:|---:|---:|
-| `en` | 644 | 128 | 95 | 2 | 419 |
-| `ru`, `ko`, `cmn-Hant` (each) | 97 | 0 | 95 | 2 | 0 |
+| `en` | 64 | 1 | 14 | 0 | 49 |
+| `ru`, `ko`, `cmn-Hant` (each) | 14 | 0 | 14 | 0 | 0 |
 
-The 419 new English stats are 138 Viscera implicits, 277 `effect_` "Supported by" / "Grants" stats and 4 Chaplain of
-the Well skills. The 128 aliases are the Item Rarity suffix, 5 Viscera wordings, 107 "within N metres" wordings and
-15 rarity / crafting bench / Vigilant Strike wordings. 95 `addTradeIds` entries carry the 96 Viscera implicit ids.
+The 49 new English stats and the 14 `addTradeIds` entries are Viscera implicits; the alias is the "Allies within 3
+metres ... reduced Item Rarity" wording.
 
 | `items-overrides.json` | Entries |
 |---|---:|
-| `en` | 405 (161 Viscera bases, 8 Maven's Invitations, 13 Thread items, 222 uniques, 1 mercenary build) |
-| `ru`, `ko`, `cmn-Hant` (each) | 13 (Thread items) |
+| `en` | 371 (161 Viscera bases, 8 Maven's Invitations, Frayed Thread, 201 uniques) |
+| `ru`, `ko`, `cmn-Hant` (each) | 1 (Frayed Thread) |
 
-## 24. Not on master
+## 25. Not on master
 
 All feature and fix branches are fully merged into `master`.
 
-## 25. Known stale text
+## 26. Known stale text
 
 None. `DEVELOPING.md` and the close prompt in `scripts/dev-clean-start.ps1` used to say the dev build never saves
 settings; both were corrected after section 10 landed.
 
-## 26. Every file changed
+## 27. Every file changed
 
 | File | +/- | Section |
 |---|---|---|
-| `DEVELOPING.md` | +162 | 13 |
-| `FORK_CHANGES.md` | +487 (new) | 13 |
+| `DEVELOPING.md` | +177 | 13, 23 |
+| `FORK_CHANGES.md` | +544 (new) | 13, 23 |
 | `README.md` | +16 | 13 |
 | `main/src/RemoteLogger.ts` | +24 -1 | 9 |
 | `main/src/host-files/ConfigStore.ts` | +59 -8 | 10 |
@@ -444,16 +501,16 @@ settings; both were corrected after section 10 landed.
 | `main/src/windowing/OverlayWindow.ts` | +27 | 9 |
 | `renderer/public/data/en/app_i18n.json` | +10 -1 | 3, 7, 19, 21 |
 | `renderer/public/data/en/client_strings.js` | +6 | 3 |
-| `renderer/public/data/items-overrides.json` | +454 (new) | 1, 3, 4, 14, 16, 17 |
+| `renderer/public/data/items-overrides.json` | +384 (new) | 1, 3, 4, 14, 17, 23 |
 | `renderer/public/data/ko/app_i18n.json` | +1 | 7 |
 | `renderer/public/data/ru/app_i18n.json` | +1 | 7 |
-| `renderer/public/data/stats-overrides.json` | +945 (new) | 1, 2, 3, 5, 15, 16, 18 |
-| `renderer/src/assets/data/index.ts` | +160 -13 | 1, 5, 20 |
+| `renderer/public/data/stats-overrides.json` | +116 (new) | 1, 3, 15, 23 |
+| `renderer/src/assets/data/index.ts` | +165 -13 | 1, 5, 20, 23 |
 | `renderer/src/assets/data/interfaces.ts` | +7 | 3 |
 | `renderer/src/assets/vite-plugin-make-indexes.ts` | +5 | 11 |
 | `renderer/src/main.ts` | +3 | 9 |
 | `renderer/src/parser/ParsedItem.ts` | +2 | 3 |
-| `renderer/src/parser/Parser.ts` | +51 | 3, 22 |
+| `renderer/src/parser/Parser.ts` | +47 | 3 |
 | `renderer/src/parser/meta.ts` | +2 -1 | 3 |
 | `renderer/src/web/Config.ts` | +15 | 7 |
 | `renderer/src/web/background/wedge-recovery.ts` | +77 (new) | 9 |
@@ -466,7 +523,7 @@ settings; both were corrected after section 10 landed.
 | `renderer/src/web/price-check/filters/create-item-filters.ts` | +5 -1 | 3, 6 |
 | `renderer/src/web/price-check/filters/create-presets.ts` | +2 -1 | 3 |
 | `renderer/src/web/price-check/filters/FilterModifier.vue` | +34 -3 | 21 |
-| `renderer/src/web/price-check/filters/create-stat-filters.ts` | +66 -43 | 19, 21 |
+| `renderer/src/web/price-check/filters/create-stat-filters.ts` | +66 -43 | 19, 21, 23 |
 | `renderer/src/web/price-check/filters/interfaces.ts` | +10 | 3, 8, 19, 21 |
 | `renderer/src/web/price-check/filters/pseudo/index.ts` | +16 -1 | 21 |
 | `renderer/src/web/price-check/filters/pseudo/mercenary.ts` | +6 -18 | 8 |
@@ -474,7 +531,7 @@ settings; both were corrected after section 10 landed.
 | `scripts/dev-clean-start.ps1` | +484 (new) | 12 |
 | `scripts/install-dev-shortcut.ps1` | +23 (new) | 12 |
 
-## 27. Regenerating this inventory
+## 28. Regenerating this inventory
 
 ```sh
 base=$(git merge-base master upstream/master)   # upstream = SnosMe/awakened-poe-trade

@@ -70,11 +70,29 @@ The file is keyed by client language (`en`, `ru`, `ko`, `cmn-Hant`); a language 
   ("Unknown stat provided"). Give the upstream `ref`, no matchers, and the full new ids by mod type; they replace
   all of the stat's ids. Repeat the entry under every language:
   `{ "ref": "Grants Call of Steel", "matchers": [], "replaceTradeIds": { "explicit": ["explicit.effect_3467858890"] } }`
+  (an example from before upstream's 3.30 data, which adopted the new id).
 - **New stat.** The stat is missing upstream entirely. Add a full object shaped like a `stats.ndjson` line, including
-  `trade.ids`, with a `ref` that doesn't exist upstream.
+  `trade.ids`, with a `ref` that doesn't exist upstream. If upstream later ships a stat with the same `ref`, upstream's
+  copy wins and this entry's matchers are added to it as aliases, so fork-only wordings (for example a "reduced"
+  variant upstream lacks) keep working; the entry's own `trade.ids` are then ignored.
 
 Matcher strings are the item text with every number replaced by `#`, including a leading `+`/`-`
 (`+12(11-14)% to Item Rarity` becomes `#% to Item Rarity`). Use `"negate": true` for the inverse ("reduced") wording.
+
+## After syncing upstream data
+
+Every upstream data refresh can make overrides dead: upstream is looked up first, so an override whose text upstream
+now matches is never consulted. Delete an entry when upstream has:
+
+- every matcher string of an alias or new stat (for a new stat, also check that upstream's trade ids include the
+  entry's; compare after removing zero-width characters, since upstream keeps the game's U+200B in its matchers),
+- every id of an `addTradeIds` entry already on the stats with that `ref`,
+- exactly the ids of a `replaceTradeIds` entry, or no longer has its `ref`,
+- an item with the same namespace, `name` and `refName` (and, for uniques, the same base).
+
+Also look for aliases whose `ref` upstream renamed: they attach to nothing and silently stop working. Point them at
+the new `ref` (find it by the old stat's trade id). Then run a headless parse of a Ctrl+Alt+C item in every language.
+The 3.30 sync (2026-11-17) removed 900 such entries this way.
 
 ## Confirming trade ids
 
@@ -159,27 +177,24 @@ own, so they only need bases in `items-overrides.json`, in all four languages, e
 - Two other new Thread-related items trade sells in bulk: Maven's Chisel of Threads and Threaded Delirium Orb.
 
 A Thread price check goes to bulk exchange like other fragments, with the copied stack size as the stock filter.
-No parser change was needed. Not yet confirmed with a live price check in the overlay.
+No parser change was needed.
+
+Upstream's 3.30 data (synced 2026-11-17) ships all of these except Frayed Thread, with the same bulk tags, and adds
+poe.ninja prices for Threads. Only the Frayed Thread entries remain in `items-overrides.json`.
 
 ## Granted skills and supports ("Supported by", "Grants Level")
 
 Trade moved every "Socketed Gems are Supported by Level # …" and "Grants Level # …" / "Grants Summon …" stat to
-new `effect_<hash>` ids (one hash per gem, shared by explicit, implicit and enchant), and dropped most of the old
-`stat_<hash>` ids that upstream `stats.ndjson` still uses. The game text changed with it: supports now end in
-" Support" ("… Supported by Level 10 Increased Area of Effect Support") and granted skills no longer end in
-" Skill". Upstream doesn't recognize either wording, which includes the corrupted implicits on uniques.
+new `effect_<hash>` ids (one hash per gem, shared by explicit, implicit and enchant). The game text changed with it:
+supports now end in " Support" and granted skills no longer end in " Skill". The fork first covered this with 278
+English stats in `stats-overrides.json` and stripped zero-width characters from the clipboard.
 
-`stats-overrides.json` adds one English stat per `effect_` id in trade's stats list (checked 2026-11-16, Covens
-league), worded exactly like trade's text, with the ids for every mod type trade lists. Two stats whose text
-didn't change ("Grants Level # Savage Barnacle", "Grants Call of Steel") get `replaceTradeIds` in every language.
-"Grants Level # Herald of Agony" and "… Herald of Purity" exist on trade only as scourge mods, which APT doesn't
-search, so they're skipped. Other languages keep the upstream wording and ids, since the translated texts aren't
-known.
-
-PoE's copied item text puts an invisible zero-width space (U+200B) right before the gem name in these lines. The
-parser strips zero-width characters from the clipboard text before matching (`parseClipboard` in
-`renderer/src/parser/Parser.ts`), so matchers are written without it. Text pasted from elsewhere has usually lost
-the character already, which is why a pasted copy can parse when the live clipboard didn't.
+Upstream's 3.30 data (synced 2026-11-17) now has all of these stats, with the same ids, in every language. PoE's
+copied item text puts an invisible zero-width space (U+200B) right before the gem or skill name in these lines, and
+upstream keeps that character inside its matchers (`"Grants Level # \u200BAnger"`). So the fork no longer strips it
+and the override stats are gone. Consequence for testing: item text pasted from elsewhere has usually lost the
+U+200B, and then these lines show as "Not recognized modifier", although the live clipboard parses fine. Test with
+the real clipboard, or put the character back (`\u200B` before the gem name).
 
 # Fork: running the dev build
 
