@@ -180,6 +180,11 @@ function buildStatOverrides (language: string) {
       extraTradeIdsByRef.set(entry.ref, ids)
     } else if (entry.trade) {
       addedByRef.set(entry.ref, entry as Stat)
+      // Once upstream ships a stat with the same `ref`, its copy wins and this entry is
+      // never returned. Keep the fork's wordings working by also adding them as matchers.
+      const list = extraMatchersByRef.get(entry.ref) ?? []
+      list.push(...entry.matchers)
+      extraMatchersByRef.set(entry.ref, list)
     } else {
       const list = extraMatchersByRef.get(entry.ref) ?? []
       list.push(...entry.matchers)
